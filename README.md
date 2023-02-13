@@ -1,0 +1,1 @@
+# remote-result-trigger-plugin
