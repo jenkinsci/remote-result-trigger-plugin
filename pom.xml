@@ -1,0 +1,93 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.jenkins-ci.plugins</groupId>
+        <artifactId>plugin</artifactId>
+        <version>4.50</version>
+        <relativePath/>
+    </parent>
+
+    <properties>
+        <jenkins.version>2.328</jenkins.version>
+        <java.level>8</java.level>
+        <!-- https://wiki.jenkins-ci.org/display/JENKINS/Marking+a+new+plugin+version+as+incompatible+with+older+versions -->
+        <hpi.compatibleSinceVersion>3.1.6</hpi.compatibleSinceVersion>
+    </properties>
+
+    <groupId>com.itfsw</groupId>
+    <artifactId>remote-result-trigger</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>hpi</packaging>
+    <name>Remote Result Trigger Plugin</name>
+    <description>Trigger with remote build result</description>
+
+    <licenses>
+        <license>
+            <name>MIT license</name>
+            <comments>All source code is under the MIT license.</comments>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>itfsw</id>
+            <name>Wei He</name>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/itfsw/remote-result-trigger-plugin.git</connection>
+        <url>https://github.com/itfsw/remote-result-trigger-plugin</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <repositories>
+        <repository>
+            <id>repo.jenkins-ci.org</id>
+            <url>https://repo.jenkins-ci.org/public/</url>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>repo.jenkins-ci.org</id>
+            <url>https://repo.jenkins-ci.org/public/</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>xtrigger-api</artifactId>
+            <version>0.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>credentials</artifactId>
+            <version>1087.v16065d268466</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>jackson2-api</artifactId>
+            <version>2.12.6.20220326-1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jenkins.plugins</groupId>
+            <artifactId>okhttp-api</artifactId>
+            <version>3.14.9-20211029</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>3.0.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>2.18.3</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

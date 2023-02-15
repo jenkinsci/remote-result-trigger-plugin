@@ -1,11 +1,22 @@
-target/
-pom.xml.tag
-pom.xml.releaseBackup
-pom.xml.versionsBackup
-pom.xml.next
+*.class
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+# Eclipse-specific stuff
+.classpath
+.project
+*.prefs
+
+# Idea-specific stuff
+.idea/
+*.iml
+
+# jenkins data directory, build dir and release settings
+work
 release.properties
-dependency-reduced-pom.xml
-buildNumber.properties
-.mvn/timing.properties
-# https://github.com/takari/maven-wrapper#usage-without-binary-jar
-.mvn/wrapper/maven-wrapper.jar
+target
+*.releaseBackup
+*.swp

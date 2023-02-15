@@ -1,0 +1,4 @@
+<?jelly escape-by-default='true'?>
+<div>
+  This plugin triggers a job on a remote Jenkins build result
+</div>

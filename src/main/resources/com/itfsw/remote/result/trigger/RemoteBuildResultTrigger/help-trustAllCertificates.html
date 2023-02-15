@@ -1,0 +1,21 @@
+<div>
+    <div style="font-weight: bolder; text-decoration: underline">
+        Trust all certificates
+    </div>
+
+    <p>
+        It is possible to override/rewrite the 'Trust all certificate'-setting for each Job separately.
+        Setting this checkbox to 'true' will result in accepting all certificates for the given Job.
+    </p>
+
+    <div>
+    If your remote Jenkins host has a
+    <a href="https://en.wikipedia.org/wiki/Self-signed_certificate" target="_blank">
+        self-signed certificate
+    </a>
+    or its certificate is not trusted, you may want to enable this option.
+    It will accept untrusted certificates for the given host.
+    </div>
+
+    <p><strong>This is unsafe and should only be used for testing or if you trust the host.</strong></p>
+</div>
