@@ -9,8 +9,6 @@ import com.itfsw.remote.result.trigger.utils.SourceMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Action;
-import hudson.model.BuildableItem;
-import hudson.model.Job;
 import hudson.model.Node;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
@@ -50,16 +48,30 @@ public class RemoteBuildResultTrigger extends AbstractTrigger {
         this.jobName = trimToNull(jobName);
     }
 
-    /**
-     * Can be overridden if needed
-     *
-     * @param pollingNode
-     * @param project
-     * @param newInstance
-     * @param log
-     */
     @Override
-    protected void start(Node pollingNode, BuildableItem project, boolean newInstance, XTriggerLog log) throws XTriggerException {
+    protected File getLogFile() {
+        if (job == null) return null;
+        return new File(job.getRootDir(), "remote-build-result.log");
+    }
+
+    @Override
+    protected boolean requiresWorkspaceForPolling() {
+        return false;
+    }
+
+    @Override
+    protected String getName() {
+        return "RemoteResultTrigger";
+    }
+
+    @Override
+    protected Action[] getScheduledActions(Node pollingNode, XTriggerLog log) {
+        return new Action[0];
+    }
+
+    @Override
+    protected boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException {
+
         if (StringUtils.isNotEmpty(this.url) && StringUtils.isNotEmpty(this.jobName)) {
             HttpClient httpClient = HttpClient.defaultInstance();
 
@@ -74,7 +86,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger {
 
                 // auth
                 if (!(this.auth2 instanceof NoneAuth)) {
-                    request = request.header("Authorization", this.auth2.getCredentials(project));
+                    request = request.header("Authorization", this.auth2.getCredentials(job));
                 }
 
                 Map result = request.doGet(
@@ -96,45 +108,12 @@ public class RemoteBuildResultTrigger extends AbstractTrigger {
                         Integer buildNumber = sourceMap.integerValue("number");
                         Map<String, String> envs = generateRemoteEnvs(sourceMap);
 
-                        if (job instanceof Job) {
-                            RemoteJobResultUtils.saveJobRemoteResult((Job) job, buildNumber, envs);
+                        // check if change
+                        if (RemoteJobResultUtils.checkIfModified(job, buildNumber)) {
+                            RemoteJobResultUtils.saveJobRemoteResult(job, buildNumber, envs);
+                            return true;
                         }
                     }
-                }
-            } catch (IOException e) {
-                throw new XTriggerException(e);
-            }
-        }
-    }
-
-    @Override
-    protected File getLogFile() {
-        if (job == null) return null;
-        return new File(job.getRootDir(), "trigger-remote-builds.log");
-    }
-
-    @Override
-    protected boolean requiresWorkspaceForPolling() {
-        return false;
-    }
-
-    @Override
-    protected String getName() {
-        return "RemoteResultTrigger";
-    }
-
-    @Override
-    protected Action[] getScheduledActions(Node pollingNode, XTriggerLog log) {
-        return new Action[0];
-    }
-
-    @Override
-    protected boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException {
-        if (job instanceof Job) {
-            try {
-                if (RemoteJobResultUtils.checkIfModified((Job) job)) {
-                    RemoteJobResultUtils.saveJobRemoteResultUse((Job) job);
-                    return true;
                 }
             } catch (IOException e) {
                 throw new XTriggerException(e);
