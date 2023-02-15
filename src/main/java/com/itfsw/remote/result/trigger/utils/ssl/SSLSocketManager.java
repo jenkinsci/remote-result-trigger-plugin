@@ -9,14 +9,14 @@ import java.security.cert.X509Certificate;
  * okhttp3忽略https证书
  *
  * @author HW
- * @date 2022/07/18 19:47
  */
 public class SSLSocketManager {
     /**
      * 获取这个SSLSocketFactory
      *
-     * @return
+     * @return SSLSocketFactory
      */
+    @SuppressWarnings("lgtm[jenkins/unsafe-calls]")
     public static SSLSocketFactory getSSLSocketFactory() {
         try {
             SSLContext sslContext = SSLContext.getInstance("SSL");
@@ -30,10 +30,11 @@ public class SSLSocketManager {
     /**
      * 获取trustManager
      *
-     * @return
+     * @return TrustManager
      */
+    @SuppressWarnings("lgtm[jenkins/unsafe-calls]")
     public static TrustManager[] getTrustManager() {
-        TrustManager[] trustManager = new TrustManager[]{
+        return new TrustManager[]{
                 new X509TrustManager() {
                     @Override
                     public void checkClientTrusted(X509Certificate[] chain, String authType) {
@@ -49,21 +50,15 @@ public class SSLSocketManager {
                     }
                 }
         };
-        return trustManager;
     }
 
     /**
      * 获取hostnameVerifier
      *
-     * @return
+     * @return HostnameVerifier
      */
+    @SuppressWarnings("lgtm[jenkins/unsafe-calls]")
     public static HostnameVerifier getHostnameVerifier() {
-        HostnameVerifier hostnameVerifier = new HostnameVerifier() {
-            @Override
-            public boolean verify(String s, SSLSession sslSession) {
-                return true;
-            }
-        };
-        return hostnameVerifier;
+        return (s, sslSession) -> true;
     }
 }
