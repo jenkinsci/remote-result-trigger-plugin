@@ -34,9 +34,9 @@
     </developers>
 
     <scm>
-        <connection>scm:git:https://github.com/itfsw/remote-result-trigger-plugin.git</connection>
-        <developerConnection>scm:git:https://github.com/itfsw/remote-result-trigger-plugin.git</developerConnection>
-        <url>https://github.com/itfsw/remote-result-trigger-plugin</url>
+        <connection>scm:git:https://github.com/jenkinsci/remote-result-trigger-plugin.git</connection>
+        <developerConnection>scm:git:https://github.com/jenkinsci/remote-result-trigger-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/remote-result-trigger-plugin</url>
         <tag>HEAD</tag>
     </scm>
 
