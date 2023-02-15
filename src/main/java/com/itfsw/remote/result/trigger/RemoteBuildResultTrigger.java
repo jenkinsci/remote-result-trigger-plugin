@@ -4,10 +4,13 @@ import antlr.ANTLRException;
 import com.itfsw.remote.result.trigger.auth2.Auth2;
 import com.itfsw.remote.result.trigger.auth2.NoneAuth;
 import com.itfsw.remote.result.trigger.utils.HttpClient;
+import com.itfsw.remote.result.trigger.utils.RemoteJobResultUtils;
+import com.itfsw.remote.result.trigger.utils.SourceMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Action;
 import hudson.model.BuildableItem;
+import hudson.model.Job;
 import hudson.model.Node;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
@@ -19,8 +22,11 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static org.apache.commons.lang.StringUtils.trimToNull;
 
 /**
  * Remote Build Result Trigger
@@ -39,9 +45,9 @@ public class RemoteBuildResultTrigger extends AbstractTrigger {
     public RemoteBuildResultTrigger(String cronTabSpec, Auth2 auth2, String url, Boolean trustAllCertificates, String jobName) throws ANTLRException {
         super(cronTabSpec);
         this.auth2 = auth2;
-        this.url = url;
+        this.url = trimToNull(url);
         this.trustAllCertificates = trustAllCertificates;
-        this.jobName = jobName;
+        this.jobName = trimToNull(jobName);
     }
 
     /**
@@ -58,7 +64,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger {
             HttpClient httpClient = HttpClient.defaultInstance();
 
             // trustAllCertificates
-            if (this.getTrustAllCertificates()) {
+            if (getTrustAllCertificates()) {
                 httpClient = httpClient.useUnSafeSsl();
             }
 
@@ -75,7 +81,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger {
                         new StringBuilder(this.url)
                                 .append(this.url.endsWith("/") ? "" : "/")
                                 .append("job/")
-                                .append(jobName)
+                                .append(this.jobName)
                                 .append("/lastCompletedBuild/api/json")
                                 .toString(),
                         null,
@@ -83,8 +89,16 @@ public class RemoteBuildResultTrigger extends AbstractTrigger {
                 );
                 // save number and parameter
                 if (result != null) {
-                    if (result.get("number") != null) {
+                    SourceMap sourceMap = SourceMap.of(result);
 
+                    if (sourceMap.integerValue("number") != null) {
+                        // set env
+                        Integer buildNumber = sourceMap.integerValue("number");
+                        Map<String, String> envs = generateRemoteEnvs(sourceMap);
+
+                        if (job instanceof Job) {
+                            RemoteJobResultUtils.saveJobRemoteResult((Job) job, buildNumber, envs);
+                        }
                     }
                 }
             } catch (IOException e) {
@@ -116,12 +130,22 @@ public class RemoteBuildResultTrigger extends AbstractTrigger {
 
     @Override
     protected boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException {
+        if (job instanceof Job) {
+            try {
+                if (RemoteJobResultUtils.checkIfModified((Job) job)) {
+                    RemoteJobResultUtils.saveJobRemoteResultUse((Job) job);
+                    return true;
+                }
+            } catch (IOException e) {
+                throw new XTriggerException(e);
+            }
+        }
         return false;
     }
 
     @Override
     protected String getCause() {
-        return null;
+        return "A successful build result within the remote job";
     }
 
     @Override
@@ -129,6 +153,39 @@ public class RemoteBuildResultTrigger extends AbstractTrigger {
         return (RemoteBuildResultTriggerDescriptor) Jenkins.get().getDescriptorOrDie(getClass());
     }
 
+    private Map<String, String> generateRemoteEnvs(SourceMap sourceMap) {
+        Map<String, String> envs = new HashMap<>();
+        String prefix = "REMOTE_";
+        // BUILD_NUMBER
+        envs.put(prefix + "BUILD_NUMBER", sourceMap.stringValue("number"));
+        // TIMESTAMP
+        envs.put(prefix + "BUILD_TIMESTAMP", sourceMap.stringValue("timestamp"));
+        // BUILD_URL
+        envs.put(prefix + "BUILD_URL", sourceMap.stringValue("url"));
+
+        // Parameters
+        List<Map> actions = sourceMap.listValue("actions", Map.class);
+        if (actions != null) {
+            for (Map action : actions) {
+                SourceMap actionMap = SourceMap.of(action);
+                if (actionMap.stringValue("_class") != null
+                        && "hudson.model.ParametersAction".equals(actionMap.stringValue("_class"))) {
+                    List<Map> parameters = actionMap.listValue("parameters", Map.class);
+                    if (parameters != null) {
+                        for (Map parameter : parameters) {
+                            SourceMap parameterMap = SourceMap.of(parameter);
+                            if (parameterMap.stringValue("name") != null) {
+                                envs.put(prefix + parameterMap.stringValue("name"),
+                                        parameterMap.stringValue("value"));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return envs;
+    }
 
     // --------------------------------- getter ---------------------------------
     public Auth2 getAuth2() {
@@ -161,6 +218,27 @@ public class RemoteBuildResultTrigger extends AbstractTrigger {
         @Override
         public String getDisplayName() {
             return "Remote Build Result Trigger";
+        }
+
+        /**
+         * Returns the resource path to the help screen HTML, if any.
+         *
+         * <p>
+         * Starting 1.282, this method uses "convention over configuration" &mdash; you should
+         * just put the "help.html" (and its localized versions, if any) in the same directory
+         * you put your Jelly view files, and this method will automatically does the right thing.
+         *
+         * <p>
+         * This value is relative to the context root of Hudson, so normally
+         * the values are something like {@code "/plugin/emma/help.html"} to
+         * refer to static resource files in a plugin, or {@code "/publisher/EmmaPublisher/abc"}
+         * to refer to Jelly script {@code abc.jelly} or a method {@code EmmaPublisher.doAbc()}.
+         *
+         * @return null to indicate that there's no help.
+         */
+        @Override
+        public String getHelpFile() {
+            return "/plugin/remote-result-trigger/help.html";
         }
 
         public static List<Auth2.Auth2Descriptor> getAuth2Descriptors() {
