@@ -1,6 +1,7 @@
 package com.itfsw.remote.result.trigger;
 
 import antlr.ANTLRException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itfsw.remote.result.trigger.auth2.Auth2;
 import com.itfsw.remote.result.trigger.auth2.NoneAuth;
 import com.itfsw.remote.result.trigger.utils.HttpClient;
@@ -89,16 +90,13 @@ public class RemoteBuildResultTrigger extends AbstractTrigger {
                     request = request.header("Authorization", this.auth2.getCredentials(job));
                 }
 
-                Map result = request.doGet(
-                        new StringBuilder(this.url)
-                                .append(this.url.endsWith("/") ? "" : "/")
-                                .append("job/")
-                                .append(this.jobName)
-                                .append("/lastCompletedBuild/api/json")
-                                .toString(),
-                        null,
-                        Map.class
-                );
+                String buildInfoUrl = new StringBuilder(this.url).append(this.url.endsWith("/") ? "" : "/")
+                        .append("job/").append(this.jobName)
+                        .append("/lastCompletedBuild/api/json")
+                        .toString();
+                log.info("Jenkins Api:" + buildInfoUrl);
+
+                Map result = request.doGet(buildInfoUrl, null, Map.class);
                 // save number and parameter
                 if (result != null) {
                     SourceMap sourceMap = SourceMap.of(result);
@@ -107,6 +105,11 @@ public class RemoteBuildResultTrigger extends AbstractTrigger {
                         // set env
                         Integer buildNumber = sourceMap.integerValue("number");
                         Map<String, String> envs = generateRemoteEnvs(sourceMap);
+
+                        // log
+                        log.info("Last successful build number:" + buildNumber);
+                        log.info("Result:");
+                        log.info(new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(result));
 
                         // check if change
                         if (RemoteJobResultUtils.checkIfModified(job, buildNumber)) {
