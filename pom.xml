@@ -10,11 +10,9 @@
 
     <properties>
         <jenkins.version>2.361.4</jenkins.version>
-        <!-- https://wiki.jenkins-ci.org/display/JENKINS/Marking+a+new+plugin+version+as+incompatible+with+older+versions -->
-        <hpi.compatibleSinceVersion>3.1.6</hpi.compatibleSinceVersion>
     </properties>
 
-    <groupId>com.itfsw</groupId>
+    <groupId>io.jenkins.plugins</groupId>
     <artifactId>remote-result-trigger</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>hpi</packaging>
@@ -61,27 +59,19 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>xtrigger-api</artifactId>
-            <version>0.4</version>
+            <version>1.0</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>credentials</artifactId>
-            <version>1087.v16065d268466</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>jackson2-api</artifactId>
-            <version>2.13.4-293.vee957901b_6fb</version>
         </dependency>
         <dependency>
             <groupId>io.jenkins.plugins</groupId>
             <artifactId>okhttp-api</artifactId>
-            <version>3.14.9-20211029</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>jsr305</artifactId>
-            <version>3.0.2</version>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
@@ -91,4 +81,15 @@
         </dependency>
     </dependencies>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.jenkins.tools.bom</groupId>
+                <artifactId>bom-2.361.x</artifactId>
+                <version>1798.vc671fe94856f</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 </project>
