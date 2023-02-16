@@ -1,10 +1,11 @@
 package io.jenkins.plugins.remote.result.trigger.auth2;
 
-import io.jenkins.plugins.remote.result.trigger.exceptions.CredentialsNotFoundException;
 import hudson.Extension;
 import hudson.model.Item;
 import hudson.util.Secret;
+import io.jenkins.plugins.remote.result.trigger.exceptions.CredentialsNotFoundException;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -51,9 +52,12 @@ public class TokenAuth extends Auth2 {
      */
     @Override
     public String getCredentials(Item item) throws CredentialsNotFoundException {
-        String username = getUserName();
-        String token = getApiToken().getPlainText();
-        return "Basic " + Base64.encodeBase64String((username + ":" + token).getBytes());
+        if (StringUtils.isNotEmpty(this.userName) && this.apiToken != null) {
+            String username = getUserName();
+            String token = getApiToken().getPlainText();
+            return "Basic " + Base64.encodeBase64String((username + ":" + token).getBytes());
+        }
+        return null;
     }
 
     @Override

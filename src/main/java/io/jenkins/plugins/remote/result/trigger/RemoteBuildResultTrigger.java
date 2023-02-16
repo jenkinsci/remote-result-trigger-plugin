@@ -96,7 +96,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                 HttpClient.Request request = httpClient.request();
 
                 // auth
-                if (!(this.auth2 instanceof NoneAuth)) {
+                if (this.auth2.getCredentials(job) != null) {
                     request = request.header("Authorization", this.auth2.getCredentials(job));
                 }
 

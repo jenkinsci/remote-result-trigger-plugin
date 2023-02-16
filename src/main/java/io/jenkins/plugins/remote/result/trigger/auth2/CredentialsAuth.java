@@ -4,7 +4,6 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
 import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
-import io.jenkins.plugins.remote.result.trigger.exceptions.CredentialsNotFoundException;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Item;
@@ -12,8 +11,10 @@ import hudson.model.Queue;
 import hudson.model.queue.Tasks;
 import hudson.security.ACL;
 import hudson.util.ListBoxModel;
+import io.jenkins.plugins.remote.result.trigger.exceptions.CredentialsNotFoundException;
 import jenkins.model.Jenkins;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -85,9 +86,12 @@ public class CredentialsAuth extends Auth2 {
      */
     @Override
     public String getCredentials(Item item) throws CredentialsNotFoundException {
-        String username = getUserName(item);
-        String password = getPassword(item);
-        return "Basic " + Base64.encodeBase64String((username + ":" + password).getBytes());
+        if (StringUtils.isNotEmpty(this.credentialsId)) {
+            String username = getUserName(item);
+            String password = getPassword(item);
+            return "Basic " + Base64.encodeBase64String((username + ":" + password).getBytes());
+        }
+        return null;
     }
 
     @Override
