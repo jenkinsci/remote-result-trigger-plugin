@@ -3,6 +3,10 @@ Remote-Build-Result-Trigger-Plugin
 
 A plugin for Jenkins CI  that gives you the ability to monitor successful build on a **remote** Jenkins server.
 
+## Scenes
+
+Build project and pull docker images on a remote server（having public ip）, Customer didn't having a public ip and we dont want to share source code.
+
 ## Instructions
 Enable the trigger within the "Remote Build Result Trigger" section of the build's configuration page.  
 When remote server build successful, plugin will trigger a local build and inject remote envs to job.
