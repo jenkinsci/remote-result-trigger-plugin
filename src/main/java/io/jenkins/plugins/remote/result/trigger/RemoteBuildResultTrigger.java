@@ -2,29 +2,36 @@ package io.jenkins.plugins.remote.result.trigger;
 
 import antlr.ANTLRException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import hudson.Extension;
+import hudson.model.Action;
+import hudson.model.Node;
+import hudson.util.FormValidation;
 import io.jenkins.plugins.remote.result.trigger.auth2.Auth2;
 import io.jenkins.plugins.remote.result.trigger.auth2.NoneAuth;
 import io.jenkins.plugins.remote.result.trigger.utils.HttpClient;
 import io.jenkins.plugins.remote.result.trigger.utils.RemoteJobResultUtils;
 import io.jenkins.plugins.remote.result.trigger.utils.SourceMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import hudson.Extension;
-import hudson.model.Action;
-import hudson.model.Node;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.xtriggerapi.AbstractTrigger;
 import org.jenkinsci.plugins.xtriggerapi.XTriggerDescriptor;
 import org.jenkinsci.plugins.xtriggerapi.XTriggerException;
 import org.jenkinsci.plugins.xtriggerapi.XTriggerLog;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.trimToNull;
 
 /**
@@ -36,15 +43,15 @@ import static org.apache.commons.lang.StringUtils.trimToNull;
 public class RemoteBuildResultTrigger extends AbstractTrigger {
     private Auth2 auth2;
 
-    private String url;
+    private String remoteJenkinsUrl;
     private Boolean trustAllCertificates;
     private String jobName;
 
     @DataBoundConstructor
-    public RemoteBuildResultTrigger(String cronTabSpec, Auth2 auth2, String url, Boolean trustAllCertificates, String jobName) throws ANTLRException {
+    public RemoteBuildResultTrigger(String cronTabSpec, Auth2 auth2, String remoteJenkinsUrl, Boolean trustAllCertificates, String jobName) throws ANTLRException {
         super(cronTabSpec);
         this.auth2 = auth2;
-        this.url = trimToNull(url);
+        this.remoteJenkinsUrl = trimToNull(remoteJenkinsUrl);
         this.trustAllCertificates = trustAllCertificates;
         this.jobName = trimToNull(jobName);
     }
@@ -73,7 +80,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger {
     @Override
     protected boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException {
 
-        if (StringUtils.isNotEmpty(this.url) && StringUtils.isNotEmpty(this.jobName)) {
+        if (StringUtils.isNotEmpty(this.remoteJenkinsUrl) && StringUtils.isNotEmpty(this.jobName)) {
             HttpClient httpClient = HttpClient.defaultInstance();
 
             // trustAllCertificates
@@ -90,7 +97,8 @@ public class RemoteBuildResultTrigger extends AbstractTrigger {
                     request = request.header("Authorization", this.auth2.getCredentials(job));
                 }
 
-                String buildInfoUrl = new StringBuilder(this.url).append(this.url.endsWith("/") ? "" : "/")
+                String buildInfoUrl = new StringBuilder(this.remoteJenkinsUrl)
+                        .append(this.remoteJenkinsUrl.endsWith("/") ? "" : "/")
                         .append("job/").append(this.jobName)
                         .append("/lastCompletedBuild/api/json")
                         .toString();
@@ -174,8 +182,8 @@ public class RemoteBuildResultTrigger extends AbstractTrigger {
         return auth2;
     }
 
-    public String getUrl() {
-        return url;
+    public String getRemoteJenkinsUrl() {
+        return remoteJenkinsUrl;
     }
 
     public String getJobName() {
@@ -221,6 +229,50 @@ public class RemoteBuildResultTrigger extends AbstractTrigger {
         @Override
         public String getHelpFile() {
             return "/plugin/remote-result-trigger/help.html";
+        }
+
+        @Restricted(NoExternalUse.class)
+        public FormValidation doCheckRemoteJenkinsUrl(@QueryParameter("remoteJenkinsUrl") final String remoteJenkinsUrl) {
+            if (StringUtils.isEmpty(remoteJenkinsUrl) || !isURL(remoteJenkinsUrl)) {
+                return FormValidation.error("Invalid URL in 'Remote Jenkins URL'");
+            }
+            return FormValidation.ok();
+        }
+
+        @Restricted(NoExternalUse.class)
+        public FormValidation doCheckJobName(@QueryParameter("jobName") final String jobName) {
+            // check jobName
+            if (StringUtils.isEmpty(jobName)) {
+                return FormValidation.error("'Remote Job Name' not specified");
+            }
+            return FormValidation.ok();
+        }
+
+        /**
+         * Checks if a string is a valid http/https URL.
+         *
+         * @param string the url to check.
+         * @return true if parameter is a valid http/https URL.
+         */
+        private boolean isURL(String string) {
+            if (isEmpty(trimToNull(string))) return false;
+            String stringLower = string.toLowerCase();
+            if (stringLower.startsWith("http://") || stringLower.startsWith("https://")) {
+                if (stringLower.indexOf("://") >= stringLower.length() - 3) {
+                    return false; //URL ends after protocol
+                }
+                if (stringLower.indexOf("$") >= 0) {
+                    return false; //We interpret $ in URLs as variables which need to be replaced. TODO: What about URI standard which allows $?
+                }
+                try {
+                    new URL(string);
+                    return true;
+                } catch (MalformedURLException e) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
         }
 
         public static List<Auth2.Auth2Descriptor> getAuth2Descriptors() {

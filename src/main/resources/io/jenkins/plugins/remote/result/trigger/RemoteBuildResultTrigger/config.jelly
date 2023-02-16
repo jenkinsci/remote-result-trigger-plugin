@@ -2,7 +2,7 @@
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
 
     <f:section title="Server Info">
-        <f:entry title="Remote Jenkins URL" field="url">
+        <f:entry title="Remote Jenkins URL" field="remoteJenkinsUrl">
             <f:textbox/>
         </f:entry>
 
