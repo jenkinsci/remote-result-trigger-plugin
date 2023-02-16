@@ -102,7 +102,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                 String buildInfoUrl = new StringBuilder(this.remoteJenkinsUrl)
                         .append(this.remoteJenkinsUrl.endsWith("/") ? "" : "/")
                         .append("job/").append(this.jobName)
-                        .append("/lastCompletedBuild/api/json")
+                        .append("/lastSuccessfulBuild/api/json")
                         .toString();
                 log.info("Jenkins Api:" + buildInfoUrl);
 
