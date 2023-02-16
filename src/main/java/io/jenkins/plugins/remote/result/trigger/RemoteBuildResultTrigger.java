@@ -1,7 +1,6 @@
 package io.jenkins.plugins.remote.result.trigger;
 
 import antlr.ANTLRException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Action;
@@ -119,8 +118,6 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
 
                         // log
                         log.info("Last successful build number:" + buildNumber);
-                        log.info("Result:");
-                        log.info(new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(result));
 
                         // check if change
                         if (RemoteJobResultUtils.checkIfModified(job, buildNumber)) {
