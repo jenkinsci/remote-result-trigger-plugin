@@ -21,6 +21,7 @@ import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.verb.POST;
 
 import java.io.File;
 import java.io.IOException;
@@ -231,6 +232,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
             return "/plugin/remote-result-trigger/help.html";
         }
 
+        @POST
         @Restricted(NoExternalUse.class)
         public FormValidation doCheckRemoteJenkinsUrl(@QueryParameter("remoteJenkinsUrl") final String remoteJenkinsUrl) {
             if (StringUtils.isEmpty(remoteJenkinsUrl) || !isURL(remoteJenkinsUrl)) {
@@ -239,6 +241,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
             return FormValidation.ok();
         }
 
+        @POST
         @Restricted(NoExternalUse.class)
         public FormValidation doCheckJobName(@QueryParameter("jobName") final String jobName) {
             // check jobName
