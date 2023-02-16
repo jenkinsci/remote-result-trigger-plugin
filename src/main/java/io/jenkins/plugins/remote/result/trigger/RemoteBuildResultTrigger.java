@@ -235,6 +235,9 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
         @POST
         @Restricted(NoExternalUse.class)
         public FormValidation doCheckRemoteJenkinsUrl(@QueryParameter("remoteJenkinsUrl") final String remoteJenkinsUrl) {
+            if (!Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
+                return FormValidation.ok();
+            }
             if (StringUtils.isEmpty(remoteJenkinsUrl) || !isURL(remoteJenkinsUrl)) {
                 return FormValidation.error("Invalid URL in 'Remote Jenkins URL'");
             }
