@@ -86,7 +86,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
             HttpClient httpClient = HttpClient.defaultInstance();
 
             // trustAllCertificates
-            if (getTrustAllCertificates()) {
+            if (this.trustAllCertificates != null && this.trustAllCertificates) {
                 httpClient = httpClient.useUnSafeSsl();
             }
 
@@ -191,7 +191,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
     }
 
     public Boolean getTrustAllCertificates() {
-        return trustAllCertificates == null ? true : trustAllCertificates;
+        return trustAllCertificates;
     }
 
     @Extension

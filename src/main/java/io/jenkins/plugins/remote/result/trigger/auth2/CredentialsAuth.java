@@ -148,7 +148,6 @@ public class CredentialsAuth extends Auth2 {
             return "Credentials Authentication";
         }
 
-        @RequirePOST
         @POST
         public static ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item item,
                                                             @QueryParameter String credentialsId) {
