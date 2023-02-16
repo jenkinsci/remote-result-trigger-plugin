@@ -25,6 +25,7 @@ import org.kohsuke.stapler.QueryParameter;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
@@ -40,7 +41,9 @@ import static org.apache.commons.lang.StringUtils.trimToNull;
  * @author HW
  * @date 2023/02/13 20:02
  */
-public class RemoteBuildResultTrigger extends AbstractTrigger {
+public class RemoteBuildResultTrigger extends AbstractTrigger implements Serializable {
+    private static final long serialVersionUID = -4059001060991775146L;
+
     private Auth2 auth2;
 
     private String remoteJenkinsUrl;
