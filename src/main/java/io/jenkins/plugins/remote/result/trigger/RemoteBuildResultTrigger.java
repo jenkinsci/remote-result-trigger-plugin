@@ -105,7 +105,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                         .append("job/").append(this.jobName)
                         .append("/lastSuccessfulBuild/api/json")
                         .toString();
-                log.info("Jenkins Api:" + buildInfoUrl);
+                log.info("Last successful build check api: " + buildInfoUrl);
 
                 Map result = request.doGet(buildInfoUrl, null, Map.class);
                 // save number and parameter
@@ -118,7 +118,8 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                         Map<String, String> envs = generateRemoteEnvs(sourceMap);
 
                         // log
-                        log.info("Last successful build number:" + buildNumber);
+                        log.info("Last successful build number: " + buildNumber);
+                        log.info("Last successful build url: " + sourceMap.stringValue("url"));
 
                         // check if change
                         if (RemoteJobResultUtils.checkIfModified(job, buildNumber)) {
