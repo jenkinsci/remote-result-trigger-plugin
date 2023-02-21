@@ -68,7 +68,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
         if (CollectionUtils.isNotEmpty(remoteJobInfos)) {
             for (RemoteJobInfo jobInfo : remoteJobInfos) {
                 log.info("Last successful build check api:" + RemoteJobResultUtils.getLastSuccessfulBuildApiUrl(
-                        job, jobInfo.getRemoteJenkinsServer(), jobInfo.getRemoteJobName()));
+                        jobInfo.getRemoteJenkinsServer(), jobInfo.getRemoteJobName()));
                 // get last remote successful build
                 try {
                     SourceMap result = RemoteJobResultUtils.requestLastSuccessfulBuild(

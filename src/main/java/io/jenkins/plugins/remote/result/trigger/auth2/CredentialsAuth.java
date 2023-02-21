@@ -19,6 +19,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
@@ -84,7 +85,7 @@ public class CredentialsAuth extends Auth2 {
         if (StringUtils.isNotEmpty(this.credentialsId)) {
             String username = getUserName(item);
             String password = getPassword(item);
-            return "Basic " + Base64.encodeBase64String((username + ":" + password).getBytes());
+            return "Basic " + Base64.encodeBase64String((username + ":" + password).getBytes(StandardCharsets.UTF_8));
         }
         return null;
     }

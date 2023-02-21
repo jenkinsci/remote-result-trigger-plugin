@@ -64,12 +64,12 @@ public class RemoteJobResultUtils {
         // OkHttp Request
         Request.Builder requestBuilder = new Request.Builder();
         // auth
-        if (remoteServer.getAuth2().getCredentials(job) != null) {
+        if (remoteServer.getAuth2() != null && remoteServer.getAuth2().getCredentials(job) != null) {
             requestBuilder = requestBuilder.header("Authorization", remoteServer.getAuth2().getCredentials(job));
         }
 
         // api url
-        Request request = requestBuilder.url(getLastSuccessfulBuildApiUrl(job, remoteJenkinsServer, jobName)).get().build();
+        Request request = requestBuilder.url(getLastSuccessfulBuildApiUrl(remoteJenkinsServer, jobName)).get().build();
 
         Call call = okHttpClient.newCall(request);
         try (Response response = call.execute()) {
@@ -88,12 +88,11 @@ public class RemoteJobResultUtils {
     /**
      * get lastSuccessfulBuild api url
      *
-     * @param job
      * @param remoteJenkinsServer
      * @param jobName
      * @return
      */
-    public static String getLastSuccessfulBuildApiUrl(Item job, String remoteJenkinsServer, String jobName) {
+    public static String getLastSuccessfulBuildApiUrl(String remoteJenkinsServer, String jobName) {
         RemoteJenkinsServer remoteServer = RemoteJenkinsServerUtils.getRemoteJenkinsServer(remoteJenkinsServer);
         if (remoteServer != null) {
             return new StringBuilder(remoteServer.getUrl())

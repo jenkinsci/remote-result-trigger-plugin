@@ -94,7 +94,6 @@ public class RemoteJenkinsServer implements Describable<RemoteJenkinsServer>, Se
         this.auth2 = auth2;
     }
 
-    @CheckForNull
     public String getUrl() {
         return url;
     }
@@ -118,7 +117,7 @@ public class RemoteJenkinsServer implements Describable<RemoteJenkinsServer>, Se
         public FormValidation doCheckUrl(@QueryParameter String url) {
             // no empty addresses allowed
             if (StringUtils.isEmpty(url)) {
-                return FormValidation.warning("The remote address can not be empty.");
+                return FormValidation.error("The remote address can not be empty.");
             }
 
             // check if we have a valid, well-formed URL

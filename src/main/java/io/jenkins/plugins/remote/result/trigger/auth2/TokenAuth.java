@@ -10,6 +10,8 @@ import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
+import java.nio.charset.StandardCharsets;
+
 public class TokenAuth extends Auth2 {
 
     private static final long serialVersionUID = 7912089565969112023L;
@@ -55,7 +57,7 @@ public class TokenAuth extends Auth2 {
         if (StringUtils.isNotEmpty(this.userName) && this.apiToken != null) {
             String username = getUserName();
             String token = getApiToken().getPlainText();
-            return "Basic " + Base64.encodeBase64String((username + ":" + token).getBytes());
+            return "Basic " + Base64.encodeBase64String((username + ":" + token).getBytes(StandardCharsets.UTF_8));
         }
         return null;
     }

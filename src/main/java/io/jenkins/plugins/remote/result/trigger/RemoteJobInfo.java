@@ -105,11 +105,13 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
             model.add("");
 
             RemoteJenkinsServer[] servers = RemoteJenkinsServerUtils.getRemoteServers();
-            for (RemoteJenkinsServer server : servers) {
-                model.add(
-                        StringUtils.isNotEmpty(server.getDisplayName()) ? server.getDisplayName() : server.getUrl(),
-                        server.getId()
-                );
+            if (servers != null) {
+                for (RemoteJenkinsServer server : servers) {
+                    model.add(
+                            StringUtils.isNotEmpty(server.getDisplayName()) ? server.getDisplayName() : server.getUrl(),
+                            server.getId()
+                    );
+                }
             }
 
             return model;
