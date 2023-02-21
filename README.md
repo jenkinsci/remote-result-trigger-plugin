@@ -21,16 +21,16 @@ When remote server build successful, plugin will trigger a local build and injec
 | REMOTE_PARAMETER_${PARAMETER_NAME} | If remote job use buildWithParameters, use remote parameters replace ${PARAMETER_NAME}.                                                           |
 
 If monitor more than one remote job
+> The **Remote Job Replacement(Optional)** used to replace injected envs, If didn't set, it will be replace with **Remote Job Name**
 
-
-| EVN_NAME                                          | description                                                                                                                                       |
-|---------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
-| REMOTE_${RemoteJobId}_BUILD_NUMBER                | The remote build number, such as "153".                                                                                                           |  
-| REMOTE_${RemoteJobId}_BUILD_TIMESTAMP             | The remote build timestamp, such as "1676017363424".                                                                                              |
-| REMOTE_${RemoteJobId}_BUILD_URL                   | Full URL of this build, like [https://server:port/jenkins/job/foo/15/](https://server:port/jenkins/job/foo/15/) (<i>Jenkins URL</i> must be set). |
-| REMOTE_${RemoteJobId}_JOB_NAME                    | The Configuration of  **Remote Job Name**                                                                                                         |
-| REMOTE_${RemoteJobId}_JOB_ID                      | The Configuration of  **Remote Job Id(Optional)**                                                                                                 |
-| REMOTE_${RemoteJobId}_PARAMETER_${PARAMETER_NAME} | If remote job use buildWithParameters, use remote parameters replace ${PARAMETER_NAME}.                                                           |
+| EVN_NAME                                                    | description                                                                                                                                       |
+|-------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
+| REMOTE_${RemoteJobReplacement}_BUILD_NUMBER                 | The remote build number, such as "153".                                                                                                           |  
+| REMOTE_${RemoteJobReplacement}_BUILD_TIMESTAMP              | The remote build timestamp, such as "1676017363424".                                                                                              |
+| REMOTE_${RemoteJobReplacement}_BUILD_URL                    | Full URL of this build, like [https://server:port/jenkins/job/foo/15/](https://server:port/jenkins/job/foo/15/) (<i>Jenkins URL</i> must be set). |
+| REMOTE_${RemoteJobReplacement}_JOB_NAME                     | The Configuration of  **Remote Job Name**                                                                                                         |
+| REMOTE_${RemoteJobReplacement}_JOB_ID                       | The Configuration of  **Remote Job Id(Optional)**                                                                                                 |
+| REMOTE_${RemoteJobReplacement}\_PARAMETER_${PARAMETER_NAME} | If remote job use buildWithParameters, use remote parameters replace ${PARAMETER_NAME}.                                                           |
 
 
 ![](screenshots/2023021501.png)
