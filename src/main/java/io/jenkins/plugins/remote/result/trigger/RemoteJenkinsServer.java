@@ -6,6 +6,7 @@ import hudson.model.Descriptor;
 import hudson.util.FormValidation;
 import io.jenkins.plugins.remote.result.trigger.auth2.Auth2;
 import io.jenkins.plugins.remote.result.trigger.auth2.NoneAuth;
+import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
@@ -108,6 +109,9 @@ public class RemoteJenkinsServer implements Describable<RemoteJenkinsServer>, Se
         @POST
         @Restricted(NoExternalUse.class)
         public FormValidation doCheckUrl(@QueryParameter String url) {
+            if (!Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
+                return FormValidation.ok();
+            }
             // no empty addresses allowed
             if (StringUtils.isEmpty(url)) {
                 return FormValidation.error("The remote address can not be empty.");

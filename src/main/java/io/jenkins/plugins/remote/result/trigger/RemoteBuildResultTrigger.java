@@ -39,6 +39,12 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
     @DataBoundConstructor
     public RemoteBuildResultTrigger(String cronTabSpec, List<RemoteJobInfo> remoteJobInfos) throws ANTLRException {
         super(cronTabSpec);
+        // add id
+        for (RemoteJobInfo jobInfo : remoteJobInfos) {
+            if (StringUtils.isEmpty(jobInfo.getId())) {
+                jobInfo.setId(UUID.randomUUID().toString());
+            }
+        }
         this.remoteJobInfos = remoteJobInfos;
     }
 
@@ -88,8 +94,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                             log.info("Need trigger, local cache build number: " + localCacheBuildNumber);
                             // cache
                             RemoteJobResultUtils.saveLastSuccessfulBuild(
-                                    job, jobInfo.getRemoteJenkinsServer(), jobInfo.getRemoteJobName(),
-                                    jobInfo.getRemoteJobId(), result
+                                    job, jobInfo, result
                             );
                             return true;
                         }

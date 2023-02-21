@@ -8,7 +8,7 @@ import org.apache.commons.lang.StringUtils;
 /**
  * Global Jenkins Server Tool
  *
- * @author root
+ * @author HW
  * @date 2023/02/20 17:03
  */
 public class RemoteJenkinsServerUtils {

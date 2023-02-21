@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 import hudson.model.BuildableItem;
 import hudson.model.Item;
 import io.jenkins.plugins.remote.result.trigger.RemoteJenkinsServer;
+import io.jenkins.plugins.remote.result.trigger.RemoteJobInfo;
 import io.jenkins.plugins.remote.result.trigger.exceptions.JenkinsRemoteUnSuccessRequestStatusException;
 import io.jenkins.plugins.remote.result.trigger.utils.ssl.SSLSocketManager;
 import okhttp3.*;
@@ -109,15 +110,15 @@ public class RemoteJobResultUtils {
      * local cache build number
      *
      * @param job
-     * @param remoteJenkinsServer
-     * @param jobName
+     * @param remoteServer
+     * @param remoteJob
      * @return
      * @throws IOException
      */
-    public static Integer getLocalCacheBuildNumber(Item job, String remoteJenkinsServer, String jobName) throws IOException {
+    public static Integer getLocalCacheBuildNumber(Item job, String remoteServer, String remoteJob) throws IOException {
         List<Result> results = getJobRemoteResults(job);
         for (Result result : results) {
-            if (result.getServerJobKey().equals(serverJobKey(remoteJenkinsServer, jobName))) {
+            if (StringUtils.equals(remoteServer, result.getRemoteServer()) && StringUtils.equals(remoteJob, result.getRemoteJob())) {
                 return result.getBuildNumber();
             }
         }
@@ -128,24 +129,20 @@ public class RemoteJobResultUtils {
      * save build info
      *
      * @param job
-     * @param remoteJenkinsServer
-     * @param remoteJobName
-     * @param remoteJobId
+     * @param jobInfo
      * @param remoteResult
      */
-    public static void saveLastSuccessfulBuild(BuildableItem job, String remoteJenkinsServer,
-                                               String remoteJobName, String remoteJobId, SourceMap remoteResult) throws IOException {
+    public static void saveLastSuccessfulBuild(BuildableItem job, RemoteJobInfo jobInfo, SourceMap remoteResult) throws IOException {
         // build cache info
-        // server job key
-        String serverJobKey = serverJobKey(remoteJenkinsServer, remoteJobName);
         // get cached list and remove cached job
         List<Result> cachedList = getJobRemoteResults(job);
-        cachedList.removeIf(result1 -> result1.serverJobKey.equals(serverJobKey));
+        cachedList.removeIf(result -> StringUtils.equals(jobInfo.getRemoteJenkinsServer(), result.getRemoteServer()) && StringUtils.equals(jobInfo.getId(), result.getRemoteJob()));
         // add
         Result result = new Result();
-        result.setServerJobKey(serverJobKey);
-        result.setRemoteJobName(remoteJobName);
-        result.setRemoteJobId(remoteJobId);
+        result.setRemoteServer(jobInfo.getRemoteJenkinsServer());
+        result.setRemoteJob(jobInfo.getId());
+        result.setRemoteJobName(jobInfo.getRemoteJobName());
+        result.setRemoteJobReplacement(jobInfo.getRemoteJobReplacement());
         result.setBuildNumber(remoteResult.integerValue("number"));
         result.setResult(remoteResult.getSource());
         cachedList.add(result);
@@ -177,24 +174,12 @@ public class RemoteJobResultUtils {
             }
             // prefix with job id
             String prefix = new StringBuilder("REMOTE_")
-                    .append(StringUtils.isNotEmpty(result.getRemoteJobId()) ? result.remoteJobId : result.remoteJobName)
+                    .append(StringUtils.isNotEmpty(result.getRemoteJobReplacement()) ? result.remoteJobReplacement : result.remoteJobName)
                     .append("_")
                     .toString();
             envs.putAll(generateEnvs(prefix, result));
         }
         return envs;
-    }
-
-
-    /**
-     * job id
-     *
-     * @param remoteJenkinsServer
-     * @param jobName
-     * @return
-     */
-    private static String serverJobKey(String remoteJenkinsServer, String jobName) {
-        return new StringBuilder(remoteJenkinsServer).append("###").append(jobName).toString();
     }
 
     /**
@@ -244,8 +229,8 @@ public class RemoteJobResultUtils {
         // JOB_NAME
         envs.put(prefix + "JOB_NAME", result.getRemoteJobName());
         // JOB_ID
-        if (StringUtils.isNotEmpty(result.getRemoteJobId())) {
-            envs.put(prefix + "JOB_ID", result.getRemoteJobId());
+        if (StringUtils.isNotEmpty(result.getRemoteJobReplacement())) {
+            envs.put(prefix + "JOB_ID", result.getRemoteJobReplacement());
         }
 
         // Parameters
@@ -280,18 +265,27 @@ public class RemoteJobResultUtils {
      * Info
      */
     public static class Result {
-        private String serverJobKey;
+        private String remoteServer;
+        private String remoteJob;
         private String remoteJobName;
-        private String remoteJobId;
+        private String remoteJobReplacement;
         private Integer buildNumber;
         private Map<String, Object> result;
 
-        public String getServerJobKey() {
-            return serverJobKey;
+        public String getRemoteServer() {
+            return remoteServer;
         }
 
-        public void setServerJobKey(String serverJobKey) {
-            this.serverJobKey = serverJobKey;
+        public void setRemoteServer(String remoteServer) {
+            this.remoteServer = remoteServer;
+        }
+
+        public String getRemoteJob() {
+            return remoteJob;
+        }
+
+        public void setRemoteJob(String remoteJob) {
+            this.remoteJob = remoteJob;
         }
 
         public String getRemoteJobName() {
@@ -302,12 +296,12 @@ public class RemoteJobResultUtils {
             this.remoteJobName = remoteJobName;
         }
 
-        public String getRemoteJobId() {
-            return remoteJobId;
+        public String getRemoteJobReplacement() {
+            return remoteJobReplacement;
         }
 
-        public void setRemoteJobId(String remoteJobId) {
-            this.remoteJobId = remoteJobId;
+        public void setRemoteJobReplacement(String remoteJobReplacement) {
+            this.remoteJobReplacement = remoteJobReplacement;
         }
 
         public Integer getBuildNumber() {

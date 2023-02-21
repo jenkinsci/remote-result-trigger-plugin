@@ -6,6 +6,7 @@ import hudson.model.Descriptor;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import io.jenkins.plugins.remote.result.trigger.utils.RemoteJenkinsServerUtils;
+import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
@@ -25,9 +26,10 @@ import java.io.Serializable;
 public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
     private static final long serialVersionUID = -7232627326475916056L;
 
+    private String id;
     private String remoteJenkinsServer;
     private String remoteJobName;
-    private String remoteJobId;
+    private String remoteJobReplacement;
 
     @DataBoundConstructor
     public RemoteJobInfo() {
@@ -45,6 +47,15 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
     @Override
     public Descriptor<RemoteJobInfo> getDescriptor() {
         return new DescriptorImpl();
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    @DataBoundSetter
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getRemoteJenkinsServer() {
@@ -65,13 +76,13 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
         this.remoteJobName = remoteJobName;
     }
 
-    public String getRemoteJobId() {
-        return remoteJobId;
+    public String getRemoteJobReplacement() {
+        return remoteJobReplacement;
     }
 
     @DataBoundSetter
-    public void setRemoteJobId(String remoteJobId) {
-        this.remoteJobId = remoteJobId;
+    public void setRemoteJobReplacement(String remoteJobReplacement) {
+        this.remoteJobReplacement = remoteJobReplacement;
     }
 
     @Extension
@@ -99,7 +110,7 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
          */
         @POST
         @Restricted(NoExternalUse.class)
-        public ListBoxModel doFillRemoteJenkinsServerItems() {
+        public ListBoxModel doFillRemoteJenkinsServerItems(@QueryParameter String remoteJenkinsServer) {
             ListBoxModel model = new ListBoxModel();
 
             model.add("");
@@ -108,7 +119,9 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
             for (RemoteJenkinsServer server : servers) {
                 String key = StringUtils.isNotEmpty(server.getDisplayName()) ? server.getDisplayName() : server.getUrl();
                 if (server.getId() != null && key != null) {
-                    model.add(key, server.getId());
+                    if (Jenkins.get().hasPermission(Jenkins.ADMINISTER) || StringUtils.equals(server.getId(), remoteJenkinsServer)) {
+                        model.add(key, server.getId());
+                    }
                 }
             }
 
