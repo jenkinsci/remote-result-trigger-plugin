@@ -48,7 +48,7 @@ public class RemoteJobResultUtils {
         RemoteJenkinsServer remoteServer = RemoteJenkinsServerUtils.getRemoteJenkinsServer(remoteJenkinsServer);
 
         // remote server configuration deleted
-        if (remoteServer == null){
+        if (remoteServer == null) {
             return null;
         }
 
@@ -173,14 +173,14 @@ public class RemoteJobResultUtils {
             Result result = results.get(i);
             // only one
             if (i == 0) {
-                envs.putAll(generateEnvs("REMOTE_", result.result));
+                envs.putAll(generateEnvs("REMOTE_", result));
             }
             // prefix with job id
             String prefix = new StringBuilder("REMOTE_")
                     .append(StringUtils.isNotEmpty(result.getRemoteJobId()) ? result.remoteJobId : result.remoteJobName)
                     .append("_")
                     .toString();
-            envs.putAll(generateEnvs(prefix, result.result));
+            envs.putAll(generateEnvs(prefix, result));
         }
         return envs;
     }
@@ -232,15 +232,21 @@ public class RemoteJobResultUtils {
      * @param result
      * @return
      */
-    private static Map<String, String> generateEnvs(String prefix, Map<String, Object> result) {
+    private static Map<String, String> generateEnvs(String prefix, Result result) {
         Map<String, String> envs = new HashMap<>();
-        SourceMap sourceMap = SourceMap.of(result);
+        SourceMap sourceMap = SourceMap.of(result.result);
         // BUILD_NUMBER
         envs.put(prefix + "BUILD_NUMBER", sourceMap.stringValue("number"));
         // TIMESTAMP
         envs.put(prefix + "BUILD_TIMESTAMP", sourceMap.stringValue("timestamp"));
         // BUILD_URL
         envs.put(prefix + "BUILD_URL", sourceMap.stringValue("url"));
+        // JOB_NAME
+        envs.put(prefix + "JOB_NAME", result.getRemoteJobName());
+        // JOB_ID
+        if (StringUtils.isNotEmpty(result.getRemoteJobId())) {
+            envs.put(prefix + "JOB_ID", result.getRemoteJobId());
+        }
 
         // Parameters
         List<Map> actions = sourceMap.listValue("actions", Map.class);
@@ -254,8 +260,11 @@ public class RemoteJobResultUtils {
                         for (Map parameter : parameters) {
                             SourceMap parameterMap = SourceMap.of(parameter);
                             if (parameterMap.stringValue("name") != null) {
-                                envs.put(prefix + parameterMap.stringValue("name"),
-                                        parameterMap.stringValue("value"));
+                                String key = new StringBuilder(prefix)
+                                        .append("PARAMETER_")
+                                        .append(parameterMap.stringValue("name"))
+                                        .toString();
+                                envs.put(key, parameterMap.stringValue("value"));
                             }
                         }
                     }
