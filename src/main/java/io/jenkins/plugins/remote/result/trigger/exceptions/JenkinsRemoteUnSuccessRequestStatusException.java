@@ -7,7 +7,7 @@ package io.jenkins.plugins.remote.result.trigger.exceptions;
  * @date 2023/02/20 19:58
  */
 public class JenkinsRemoteUnSuccessRequestStatusException extends Exception{
-    private int status;
+    private final int status;
     /**
      * Constructs a new exception with the specified detail message.  The
      * cause is not initialized, and may subsequently be initialized by

@@ -7,9 +7,6 @@ import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Item;
-import hudson.model.Queue;
-import hudson.model.queue.Tasks;
-import hudson.security.ACL;
 import hudson.util.ListBoxModel;
 import io.jenkins.plugins.remote.result.trigger.exceptions.CredentialsNotFoundException;
 import jenkins.model.Jenkins;
@@ -22,7 +19,6 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -119,7 +115,7 @@ public class CredentialsAuth extends Auth2 {
      */
     private UsernamePasswordCredentials _getCredentials(Item item) throws CredentialsNotFoundException {
         List<StandardUsernameCredentials> listOfCredentials = CredentialsProvider.lookupCredentials(
-                StandardUsernameCredentials.class, item, ACL.SYSTEM, Collections.emptyList());
+                StandardUsernameCredentials.class, item, null, Collections.emptyList());
 
         return (UsernamePasswordCredentials) _findCredential(credentialsId, listOfCredentials);
     }
@@ -155,17 +151,15 @@ public class CredentialsAuth extends Auth2 {
             List<StandardUsernameCredentials> credentials = CredentialsProvider.lookupCredentials(
                     StandardUsernameCredentials.class,
                     item,
-                    item instanceof Queue.Task ? Tasks.getAuthenticationOf((Queue.Task) item) : ACL.SYSTEM,
+                    null,
                     Collections.emptyList()
             );
             // since we only care about 'UsernamePasswordCredentials' objects, lets seek those out and ignore the rest.
-            List<StandardUsernameCredentials> standardUsernameCredentials = new ArrayList<>();
             for (StandardUsernameCredentials c : credentials) {
                 if (c instanceof UsernamePasswordCredentials) {
-                    standardUsernameCredentials.add(c);
+                    result.with(c);
                 }
             }
-            result.withAll(standardUsernameCredentials);
 
             if (item == null) {
                 if (!Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {

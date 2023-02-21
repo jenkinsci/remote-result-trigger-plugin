@@ -1,10 +1,10 @@
 package io.jenkins.plugins.remote.result.trigger.auth2;
 
-import io.jenkins.plugins.remote.result.trigger.exceptions.CredentialsNotFoundException;
 import hudson.DescriptorExtensionList;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.model.Item;
+import io.jenkins.plugins.remote.result.trigger.exceptions.CredentialsNotFoundException;
 import jenkins.model.Jenkins;
 
 import java.io.Serializable;
@@ -14,7 +14,7 @@ public abstract class Auth2 extends AbstractDescribableImpl<Auth2> implements Se
     private static final long serialVersionUID = -3217381962636283564L;
 
     private static final DescriptorExtensionList<Auth2, Auth2Descriptor> ALL = DescriptorExtensionList
-            .createDescriptorList(Jenkins.getInstance(), Auth2.class);
+            .createDescriptorList(Jenkins.getInstanceOrNull(), Auth2.class);
 
     public static DescriptorExtensionList<Auth2, Auth2Descriptor> all() {
         return ALL;
@@ -49,7 +49,5 @@ public abstract class Auth2 extends AbstractDescribableImpl<Auth2> implements Se
     public Auth2 clone() throws CloneNotSupportedException {
         return (Auth2) super.clone();
     }
-
-    ;
 
 }

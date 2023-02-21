@@ -6,7 +6,7 @@ public class CredentialsNotFoundException extends IOException
 {
 
     private static final long serialVersionUID = -2489306184948013529L;
-    private String credentialsId;
+    private final String credentialsId;
 
     public CredentialsNotFoundException(String credentialsId)
     {
