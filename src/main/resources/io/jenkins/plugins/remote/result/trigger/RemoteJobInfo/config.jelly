@@ -1,0 +1,21 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core"
+         xmlns:f="/lib/form">
+    <f:entry title="Remote Jenkins Server" help="/descriptor/io.jenkins.plugins.remote.result.trigger.RemoteJobInfo/help/remoteJenkinsServer">
+        <f:select field="remoteJenkinsServer" />
+    </f:entry>
+
+    <f:entry title="Remote Job Name" field="remoteJobName">
+        <f:textbox/>
+    </f:entry>
+
+    <f:entry title="Remote Job Id(Optional)" field="remoteJobId" help="/descriptor/io.jenkins.plugins.remote.result.trigger.RemoteJobInfo/help/remoteJobId">
+        <f:textbox/>
+    </f:entry>
+
+    <f:entry title="">
+        <div style="float: left">
+            <f:repeatableDeleteButton/>
+        </div>
+    </f:entry>
+</j:jelly>

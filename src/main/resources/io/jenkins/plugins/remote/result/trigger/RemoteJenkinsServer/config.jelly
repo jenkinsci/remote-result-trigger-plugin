@@ -1,0 +1,24 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core"
+         xmlns:f="/lib/form">
+    <f:entry title="Display name" field="displayName">
+        <f:textbox/>
+    </f:entry>
+
+    <f:entry title="Remote Jenkins URL" field="url">
+        <f:textbox/>
+    </f:entry>
+
+    <f:dropdownDescriptorSelector field="auth2" title="Authentication" descriptors="${descriptor.getAuth2Descriptors()}"
+                                  default="${descriptor.getDefaultAuth2Descriptor()}"/>
+
+    <f:entry title="Trust all certificates" field="trustAllCertificates">
+        <f:checkbox/>
+    </f:entry>
+
+    <f:entry title="">
+        <div style="float: left">
+            <f:repeatableDeleteButton/>
+        </div>
+    </f:entry>
+</j:jelly>

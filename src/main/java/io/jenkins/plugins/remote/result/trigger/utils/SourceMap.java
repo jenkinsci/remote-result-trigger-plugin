@@ -6,6 +6,7 @@ import org.springframework.core.convert.support.DefaultConversionService;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * SourceMap 工具
@@ -187,5 +188,14 @@ public class SourceMap {
             return SourceMap.of(value);
         }
         return null;
+    }
+
+    /**
+     * get source
+     *
+     * @return
+     */
+    public Map<String, Object> getSource() {
+        return source;
     }
 }

@@ -5,35 +5,24 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Action;
 import hudson.model.Node;
-import hudson.util.FormValidation;
-import io.jenkins.plugins.remote.result.trigger.auth2.Auth2;
-import io.jenkins.plugins.remote.result.trigger.auth2.NoneAuth;
-import io.jenkins.plugins.remote.result.trigger.utils.HttpClient;
+import hudson.util.CopyOnWriteList;
+import io.jenkins.plugins.remote.result.trigger.exceptions.JenkinsRemoteUnSuccessRequestStatusException;
 import io.jenkins.plugins.remote.result.trigger.utils.RemoteJobResultUtils;
 import io.jenkins.plugins.remote.result.trigger.utils.SourceMap;
 import jenkins.model.Jenkins;
-import org.apache.commons.lang.StringUtils;
+import net.sf.json.JSONObject;
+import org.apache.commons.collections.CollectionUtils;
 import org.jenkinsci.plugins.xtriggerapi.AbstractTrigger;
 import org.jenkinsci.plugins.xtriggerapi.XTriggerDescriptor;
 import org.jenkinsci.plugins.xtriggerapi.XTriggerException;
 import org.jenkinsci.plugins.xtriggerapi.XTriggerLog;
-import org.kohsuke.accmod.Restricted;
-import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.verb.POST;
+import org.kohsuke.stapler.StaplerRequest;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
-import static org.apache.commons.lang.StringUtils.isEmpty;
-import static org.apache.commons.lang.StringUtils.trimToNull;
 
 /**
  * Remote Build Result Trigger
@@ -43,20 +32,12 @@ import static org.apache.commons.lang.StringUtils.trimToNull;
  */
 public class RemoteBuildResultTrigger extends AbstractTrigger implements Serializable {
     private static final long serialVersionUID = -4059001060991775146L;
-
-    private Auth2 auth2;
-
-    private String remoteJenkinsUrl;
-    private Boolean trustAllCertificates;
-    private String jobName;
+    private List<RemoteJobInfo> remoteJobInfos;
 
     @DataBoundConstructor
-    public RemoteBuildResultTrigger(String cronTabSpec, Auth2 auth2, String remoteJenkinsUrl, Boolean trustAllCertificates, String jobName) throws ANTLRException {
+    public RemoteBuildResultTrigger(String cronTabSpec, List<RemoteJobInfo> remoteJobInfos) throws ANTLRException {
         super(cronTabSpec);
-        this.auth2 = auth2;
-        this.remoteJenkinsUrl = trimToNull(remoteJenkinsUrl);
-        this.trustAllCertificates = trustAllCertificates;
-        this.jobName = trimToNull(jobName);
+        this.remoteJobInfos = remoteJobInfos;
     }
 
     @Override
@@ -82,54 +63,43 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
 
     @Override
     protected boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException {
+        if (CollectionUtils.isNotEmpty(remoteJobInfos)) {
+            for (RemoteJobInfo jobInfo : remoteJobInfos) {
+                log.info("Last successful build check api:" + RemoteJobResultUtils.getLastSuccessfulBuildApiUrl(
+                        job, jobInfo.getRemoteJenkinsServer(), jobInfo.getRemoteJobName()));
+                // get last remote successful build
+                try {
+                    SourceMap result = RemoteJobResultUtils.requestLastSuccessfulBuild(
+                            job, jobInfo.getRemoteJenkinsServer(), jobInfo.getRemoteJobName());
+                    if (result != null) {
+                        Integer lastSuccessfulBuildNumber = result.integerValue("number");
 
-        if (StringUtils.isNotEmpty(this.remoteJenkinsUrl) && StringUtils.isNotEmpty(this.jobName)) {
-            HttpClient httpClient = HttpClient.defaultInstance();
+                        log.info("Last successful build url: " + result.stringValue("url"));
+                        log.info("Last successful build number: " + lastSuccessfulBuildNumber);
 
-            // trustAllCertificates
-            if (this.trustAllCertificates != null && this.trustAllCertificates) {
-                httpClient = httpClient.useUnSafeSsl();
-            }
-
-            // get lastSuccessfulBuild
-            try {
-                HttpClient.Request request = httpClient.request();
-
-                // auth
-                if (this.auth2.getCredentials(job) != null) {
-                    request = request.header("Authorization", this.auth2.getCredentials(job));
-                }
-
-                String buildInfoUrl = new StringBuilder(this.remoteJenkinsUrl)
-                        .append(this.remoteJenkinsUrl.endsWith("/") ? "" : "/")
-                        .append("job/").append(this.jobName)
-                        .append("/lastSuccessfulBuild/api/json")
-                        .toString();
-                log.info("Last successful build check api: " + buildInfoUrl);
-
-                Map result = request.doGet(buildInfoUrl, null, Map.class);
-                // save number and parameter
-                if (result != null) {
-                    SourceMap sourceMap = SourceMap.of(result);
-
-                    if (sourceMap.integerValue("number") != null) {
-                        // set env
-                        Integer buildNumber = sourceMap.integerValue("number");
-                        Map<String, String> envs = generateRemoteEnvs(sourceMap);
-
-                        // log
-                        log.info("Last successful build number: " + buildNumber);
-                        log.info("Last successful build url: " + sourceMap.stringValue("url"));
-
-                        // check if change
-                        if (RemoteJobResultUtils.checkIfModified(job, buildNumber)) {
-                            RemoteJobResultUtils.saveJobRemoteResult(job, buildNumber, envs);
+                        // compare with local cache
+                        Integer localCacheBuildNumber = RemoteJobResultUtils.getLocalCacheBuildNumber(
+                                job, jobInfo.getRemoteJenkinsServer(), jobInfo.getRemoteJobName()
+                        );
+                        if (localCacheBuildNumber == null || !localCacheBuildNumber.equals(lastSuccessfulBuildNumber)) {
+                            // changed
+                            log.info("Need trigger, local cache build number: " + localCacheBuildNumber);
+                            // cache
+                            RemoteJobResultUtils.saveLastSuccessfulBuild(
+                                    job, jobInfo.getRemoteJenkinsServer(), jobInfo.getRemoteJobName(),
+                                    jobInfo.getRemoteJobId(), result
+                            );
                             return true;
                         }
                     }
+                } catch (IOException e) {
+                    throw new XTriggerException("Request last remote have a io exception", e);
+                } catch (JenkinsRemoteUnSuccessRequestStatusException e) {
+                    // if status is 404, maybe didn't have a successful build
+                    if (e.getStatus() != 404) {
+                        throw new XTriggerException("Request last remote successful job fail", e);
+                    }
                 }
-            } catch (IOException e) {
-                throw new XTriggerException(e);
             }
         }
         return false;
@@ -145,59 +115,29 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
         return (RemoteBuildResultTriggerDescriptor) Jenkins.get().getDescriptorOrDie(getClass());
     }
 
-    private Map<String, String> generateRemoteEnvs(SourceMap sourceMap) {
-        Map<String, String> envs = new HashMap<>();
-        String prefix = "REMOTE_";
-        // BUILD_NUMBER
-        envs.put(prefix + "BUILD_NUMBER", sourceMap.stringValue("number"));
-        // TIMESTAMP
-        envs.put(prefix + "BUILD_TIMESTAMP", sourceMap.stringValue("timestamp"));
-        // BUILD_URL
-        envs.put(prefix + "BUILD_URL", sourceMap.stringValue("url"));
-
-        // Parameters
-        List<Map> actions = sourceMap.listValue("actions", Map.class);
-        if (actions != null) {
-            for (Map action : actions) {
-                SourceMap actionMap = SourceMap.of(action);
-                if (actionMap.stringValue("_class") != null
-                        && "hudson.model.ParametersAction".equals(actionMap.stringValue("_class"))) {
-                    List<Map> parameters = actionMap.listValue("parameters", Map.class);
-                    if (parameters != null) {
-                        for (Map parameter : parameters) {
-                            SourceMap parameterMap = SourceMap.of(parameter);
-                            if (parameterMap.stringValue("name") != null) {
-                                envs.put(prefix + parameterMap.stringValue("name"),
-                                        parameterMap.stringValue("value"));
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        return envs;
-    }
-
-    // --------------------------------- getter ---------------------------------
-    public Auth2 getAuth2() {
-        return auth2;
-    }
-
-    public String getRemoteJenkinsUrl() {
-        return remoteJenkinsUrl;
-    }
-
-    public String getJobName() {
-        return jobName;
-    }
-
-    public Boolean getTrustAllCertificates() {
-        return trustAllCertificates;
+    public List<RemoteJobInfo> getRemoteJobInfos() {
+        return remoteJobInfos;
     }
 
     @Extension
     public static class RemoteBuildResultTriggerDescriptor extends XTriggerDescriptor {
+
+        /**
+         * To persist global configuration information, simply store it in a field and
+         * call save().
+         *
+         * <p>
+         * If you don't want fields to be persisted, use <tt>transient</tt>.
+         */
+        private CopyOnWriteList<RemoteJenkinsServer> remoteJenkinsServers = new CopyOnWriteList<>();
+
+        /**
+         * In order to load the persisted global configuration, you have to
+         * call load() in the constructor.
+         */
+        public RemoteBuildResultTriggerDescriptor() {
+            load();
+        }
 
         /**
          * Human readable name of this kind of configurable object.
@@ -233,61 +173,30 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
             return "/plugin/remote-result-trigger/help.html";
         }
 
-        @POST
-        @Restricted(NoExternalUse.class)
-        public FormValidation doCheckRemoteJenkinsUrl(@QueryParameter("remoteJenkinsUrl") final String remoteJenkinsUrl) {
-            if (!Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
-                return FormValidation.ok();
-            }
-            if (StringUtils.isEmpty(remoteJenkinsUrl) || !isURL(remoteJenkinsUrl)) {
-                return FormValidation.error("Invalid URL in 'Remote Jenkins URL'");
-            }
-            return FormValidation.ok();
-        }
-
-        @POST
-        @Restricted(NoExternalUse.class)
-        public FormValidation doCheckJobName(@QueryParameter("jobName") final String jobName) {
-            // check jobName
-            if (StringUtils.isEmpty(jobName)) {
-                return FormValidation.error("'Remote Job Name' not specified");
-            }
-            return FormValidation.ok();
-        }
-
         /**
-         * Checks if a string is a valid http/https URL.
+         * Invoked when the global configuration page is submitted.
+         * <p>
+         * Can be overridden to store descriptor-specific information.
          *
-         * @param string the url to check.
-         * @return true if parameter is a valid http/https URL.
+         * @param req
+         * @param json The JSON object that captures the configuration data for this {@link hudson.model.Descriptor}.
+         *             See <a href="https://www.jenkins.io/doc/developer/forms/structured-form-submission/">the developer documentation</a>.
+         * @return false
+         * to keep the client in the same config page.
          */
-        private boolean isURL(String string) {
-            if (isEmpty(trimToNull(string))) return false;
-            String stringLower = string.toLowerCase();
-            if (stringLower.startsWith("http://") || stringLower.startsWith("https://")) {
-                if (stringLower.indexOf("://") >= stringLower.length() - 3) {
-                    return false; //URL ends after protocol
-                }
-                if (stringLower.indexOf("$") >= 0) {
-                    return false; //We interpret $ in URLs as variables which need to be replaced. TODO: What about URI standard which allows $?
-                }
-                try {
-                    new URL(string);
-                    return true;
-                } catch (MalformedURLException e) {
-                    return false;
-                }
-            } else {
-                return false;
-            }
+        @Override
+        public boolean configure(StaplerRequest req, JSONObject json) throws FormException {
+            // To persist global configuration information,
+            // set that to properties and call save().
+            remoteJenkinsServers.replaceBy(req.bindJSONToList(RemoteJenkinsServer.class, json.get("remoteJenkinsServers")));
+
+            save();
+
+            return super.configure(req, json);
         }
 
-        public static List<Auth2.Auth2Descriptor> getAuth2Descriptors() {
-            return Auth2.all();
-        }
-
-        public static Auth2.Auth2Descriptor getDefaultAuth2Descriptor() {
-            return NoneAuth.DESCRIPTOR;
+        public RemoteJenkinsServer[] getRemoteJenkinsServers() {
+            return remoteJenkinsServers.toArray(new RemoteJenkinsServer[this.remoteJenkinsServers.size()]);
         }
     }
 }
