@@ -6,7 +6,6 @@ import hudson.model.Descriptor;
 import hudson.util.FormValidation;
 import io.jenkins.plugins.remote.result.trigger.auth2.Auth2;
 import io.jenkins.plugins.remote.result.trigger.auth2.NoneAuth;
-import io.jenkins.plugins.remote.result.trigger.utils.RemoteJenkinsServerUtils;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
@@ -43,6 +42,7 @@ public class RemoteJenkinsServer implements Describable<RemoteJenkinsServer>, Se
         return new DescriptorImpl();
     }
 
+    private String id;
     @CheckForNull
     private String displayName;
     private boolean trustAllCertificates;
@@ -54,6 +54,15 @@ public class RemoteJenkinsServer implements Describable<RemoteJenkinsServer>, Se
 
     @DataBoundConstructor
     public RemoteJenkinsServer() {
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    @DataBoundSetter
+    public void setId(String id) {
+        this.id = id;
     }
 
     @CheckForNull
@@ -97,23 +106,6 @@ public class RemoteJenkinsServer implements Describable<RemoteJenkinsServer>, Se
 
     @Extension
     public static class DescriptorImpl extends Descriptor<RemoteJenkinsServer> {
-        /**
-         * Validates the name to see that it's unique.
-         *
-         * @param displayName Server display name
-         * @return FormValidation object
-         */
-        @POST
-        @Restricted(NoExternalUse.class)
-        public FormValidation doDisplayName(@QueryParameter String displayName) {
-            if (StringUtils.isNotEmpty(displayName)) {
-                List<String> names = RemoteJenkinsServerUtils.getRemoteServerDisplayNames();
-                if (names.contains(StringUtils.trim(displayName))) {
-                    return FormValidation.error("The remote server display name(" + displayName + ") is used.");
-                }
-            }
-            return FormValidation.ok();
-        }
 
         /**
          * Validates the given address to see that it's well-formed, and is reachable.

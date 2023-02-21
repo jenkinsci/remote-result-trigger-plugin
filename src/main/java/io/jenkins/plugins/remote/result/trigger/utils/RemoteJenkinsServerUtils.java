@@ -5,9 +5,6 @@ import io.jenkins.plugins.remote.result.trigger.RemoteJenkinsServer;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Global Jenkins Server Tool
  *
@@ -21,62 +18,31 @@ public class RemoteJenkinsServerUtils {
      *
      * @return
      */
-    public static List<String> getRemoteServerNames() {
+    public static RemoteJenkinsServer[] getRemoteServers() {
         RemoteBuildResultTrigger.RemoteBuildResultTriggerDescriptor trigger =
                 (RemoteBuildResultTrigger.RemoteBuildResultTriggerDescriptor) Jenkins.get()
                         .getDescriptorOrDie(RemoteBuildResultTrigger.class);
 
-        List<String> names = new ArrayList<>();
-        RemoteJenkinsServer[] remoteJenkinsServers = trigger.getRemoteJenkinsServers();
-        for (RemoteJenkinsServer server : remoteJenkinsServers) {
-            if (StringUtils.isNotEmpty(server.getDisplayName())) {
-                names.add(server.getDisplayName());
-            } else {
-                names.add(server.getUrl());
-            }
-        }
-        return names;
+        return trigger.getRemoteJenkinsServers();
     }
 
     /**
      * get RemoteJenkinsServer
      *
-     * @param name
+     * @param id
      * @return
      */
-    public static RemoteJenkinsServer getRemoteJenkinsServerByName(String name) {
+    public static RemoteJenkinsServer getRemoteJenkinsServer(String id) {
         RemoteBuildResultTrigger.RemoteBuildResultTriggerDescriptor trigger =
                 (RemoteBuildResultTrigger.RemoteBuildResultTriggerDescriptor) Jenkins.get()
                         .getDescriptorOrDie(RemoteBuildResultTrigger.class);
 
         RemoteJenkinsServer[] remoteJenkinsServers = trigger.getRemoteJenkinsServers();
         for (RemoteJenkinsServer server : remoteJenkinsServers) {
-            if (StringUtils.isNotEmpty(server.getDisplayName()) && StringUtils.equals(server.getDisplayName(), name)) {
-                return server;
-            } else if (StringUtils.equals(server.getUrl(), name)) {
+            if (StringUtils.equals(server.getId(), id)) {
                 return server;
             }
         }
         return null;
-    }
-
-    /**
-     * get config display names
-     *
-     * @return
-     */
-    public static List<String> getRemoteServerDisplayNames() {
-        RemoteBuildResultTrigger.RemoteBuildResultTriggerDescriptor trigger =
-                (RemoteBuildResultTrigger.RemoteBuildResultTriggerDescriptor) Jenkins.get()
-                        .getDescriptorOrDie(RemoteBuildResultTrigger.class);
-
-        List<String> names = new ArrayList<>();
-        RemoteJenkinsServer[] remoteJenkinsServers = trigger.getRemoteJenkinsServers();
-        for (RemoteJenkinsServer server : remoteJenkinsServers) {
-            if (StringUtils.isNotEmpty(server.getDisplayName())) {
-                names.add(server.getDisplayName());
-            }
-        }
-        return names;
     }
 }

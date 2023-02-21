@@ -45,7 +45,7 @@ public class RemoteJobResultUtils {
         // OkHttp Client
         OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
 
-        RemoteJenkinsServer remoteServer = RemoteJenkinsServerUtils.getRemoteJenkinsServerByName(remoteJenkinsServer);
+        RemoteJenkinsServer remoteServer = RemoteJenkinsServerUtils.getRemoteJenkinsServer(remoteJenkinsServer);
 
         // remote server configuration deleted
         if (remoteServer == null){
@@ -94,7 +94,7 @@ public class RemoteJobResultUtils {
      * @return
      */
     public static String getLastSuccessfulBuildApiUrl(Item job, String remoteJenkinsServer, String jobName) {
-        RemoteJenkinsServer remoteServer = RemoteJenkinsServerUtils.getRemoteJenkinsServerByName(remoteJenkinsServer);
+        RemoteJenkinsServer remoteServer = RemoteJenkinsServerUtils.getRemoteJenkinsServer(remoteJenkinsServer);
         if (remoteServer != null) {
             return new StringBuilder(remoteServer.getUrl())
                     .append(remoteServer.getUrl().endsWith("/") ? "" : "/")

@@ -12,6 +12,7 @@ import io.jenkins.plugins.remote.result.trigger.utils.SourceMap;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.xtriggerapi.AbstractTrigger;
 import org.jenkinsci.plugins.xtriggerapi.XTriggerDescriptor;
 import org.jenkinsci.plugins.xtriggerapi.XTriggerException;
@@ -23,6 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Remote Build Result Trigger
@@ -188,7 +190,16 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
         public boolean configure(StaplerRequest req, JSONObject json) throws FormException {
             // To persist global configuration information,
             // set that to properties and call save().
-            remoteJenkinsServers.replaceBy(req.bindJSONToList(RemoteJenkinsServer.class, json.get("remoteJenkinsServers")));
+            List<RemoteJenkinsServer> servers = req.bindJSONToList(RemoteJenkinsServer.class, json.get("remoteJenkinsServers"));
+
+            // add id
+            for (RemoteJenkinsServer server : servers) {
+                if (StringUtils.isEmpty(server.getId())) {
+                    server.setId(UUID.randomUUID().toString());
+                }
+            }
+
+            remoteJenkinsServers.replaceBy(servers);
 
             save();
 

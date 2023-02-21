@@ -15,7 +15,6 @@ import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
 
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * Remote Job Configuration
@@ -105,9 +104,12 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
 
             model.add("");
 
-            List<String> serverNameList = RemoteJenkinsServerUtils.getRemoteServerNames();
-            for (String name : serverNameList) {
-                model.add(name);
+            RemoteJenkinsServer[] servers = RemoteJenkinsServerUtils.getRemoteServers();
+            for (RemoteJenkinsServer server : servers) {
+                model.add(
+                        StringUtils.isNotEmpty(server.getDisplayName()) ? server.getDisplayName() : server.getUrl(),
+                        server.getId()
+                );
             }
 
             return model;
