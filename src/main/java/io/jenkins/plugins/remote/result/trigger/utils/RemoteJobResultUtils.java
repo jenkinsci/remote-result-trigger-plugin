@@ -9,10 +9,7 @@ import hudson.model.Item;
 import io.jenkins.plugins.remote.result.trigger.RemoteJenkinsServer;
 import io.jenkins.plugins.remote.result.trigger.exceptions.JenkinsRemoteUnSuccessRequestStatusException;
 import io.jenkins.plugins.remote.result.trigger.utils.ssl.SSLSocketManager;
-import okhttp3.Call;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
+import okhttp3.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 
@@ -74,15 +71,19 @@ public class RemoteJobResultUtils {
         Call call = okHttpClient.newCall(request);
         try (Response response = call.execute()) {
             if (response.isSuccessful()) {
-                String body = response.body().string();
-                // json
-                ObjectMapper mapper = new ObjectMapper();
-                mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-                return SourceMap.of(mapper.readValue(body, Map.class));
+                ResponseBody responseBody = response.body();
+                if (null != responseBody) {
+                    String body = responseBody.string();
+                    // json
+                    ObjectMapper mapper = new ObjectMapper();
+                    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+                    return SourceMap.of(mapper.readValue(body, Map.class));
+                }
             } else {
                 throw new JenkinsRemoteUnSuccessRequestStatusException("Remote Request Error", response.code());
             }
         }
+        return null;
     }
 
     /**

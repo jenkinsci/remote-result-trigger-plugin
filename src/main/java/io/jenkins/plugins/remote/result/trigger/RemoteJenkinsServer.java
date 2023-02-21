@@ -14,7 +14,6 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
 
-import javax.annotation.CheckForNull;
 import java.io.Serializable;
 import java.net.URL;
 import java.util.List;
@@ -43,13 +42,9 @@ public class RemoteJenkinsServer implements Describable<RemoteJenkinsServer>, Se
     }
 
     private String id;
-    @CheckForNull
     private String displayName;
     private boolean trustAllCertificates;
-
-    @CheckForNull
     private Auth2 auth2;
-    @CheckForNull
     private String url;
 
     @DataBoundConstructor
@@ -65,13 +60,12 @@ public class RemoteJenkinsServer implements Describable<RemoteJenkinsServer>, Se
         this.id = id;
     }
 
-    @CheckForNull
     public String getDisplayName() {
         return displayName;
     }
 
     @DataBoundSetter
-    public void setDisplayName(@CheckForNull String displayName) {
+    public void setDisplayName(String displayName) {
         this.displayName = displayName;
     }
 
@@ -84,13 +78,12 @@ public class RemoteJenkinsServer implements Describable<RemoteJenkinsServer>, Se
         this.trustAllCertificates = trustAllCertificates;
     }
 
-    @CheckForNull
     public Auth2 getAuth2() {
         return auth2;
     }
 
     @DataBoundSetter
-    public void setAuth2(@CheckForNull Auth2 auth2) {
+    public void setAuth2(Auth2 auth2) {
         this.auth2 = auth2;
     }
 
@@ -99,7 +92,7 @@ public class RemoteJenkinsServer implements Describable<RemoteJenkinsServer>, Se
     }
 
     @DataBoundSetter
-    public void setUrl(@CheckForNull String url) {
+    public void setUrl(String url) {
         this.url = url;
     }
 
