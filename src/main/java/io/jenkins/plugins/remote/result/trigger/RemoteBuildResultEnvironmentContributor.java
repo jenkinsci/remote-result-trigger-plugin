@@ -15,7 +15,6 @@ import java.util.Map;
  * Remote Env Set
  *
  * @author HW
- * @date 2023/02/15 13:11
  */
 @Extension
 public class RemoteBuildResultEnvironmentContributor extends EnvironmentContributor {

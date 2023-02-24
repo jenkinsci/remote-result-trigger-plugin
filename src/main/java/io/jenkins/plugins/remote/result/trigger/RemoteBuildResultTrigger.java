@@ -6,7 +6,7 @@ import hudson.Extension;
 import hudson.model.Action;
 import hudson.model.Node;
 import hudson.util.CopyOnWriteList;
-import io.jenkins.plugins.remote.result.trigger.exceptions.JenkinsRemoteUnSuccessRequestStatusException;
+import io.jenkins.plugins.remote.result.trigger.exceptions.UnSuccessfulRequestStatusException;
 import io.jenkins.plugins.remote.result.trigger.utils.RemoteJobResultUtils;
 import io.jenkins.plugins.remote.result.trigger.utils.SourceMap;
 import jenkins.model.Jenkins;
@@ -30,7 +30,6 @@ import java.util.UUID;
  * Remote Build Result Trigger
  *
  * @author HW
- * @date 2023/02/13 20:02
  */
 public class RemoteBuildResultTrigger extends AbstractTrigger implements Serializable {
     private static final long serialVersionUID = -4059001060991775146L;
@@ -40,9 +39,11 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
     public RemoteBuildResultTrigger(String cronTabSpec, List<RemoteJobInfo> remoteJobInfos) throws ANTLRException {
         super(cronTabSpec);
         // add id
-        for (RemoteJobInfo jobInfo : remoteJobInfos) {
-            if (StringUtils.isEmpty(jobInfo.getId())) {
-                jobInfo.setId(UUID.randomUUID().toString());
+        if (remoteJobInfos != null) {
+            for (RemoteJobInfo jobInfo : remoteJobInfos) {
+                if (StringUtils.isEmpty(jobInfo.getId())) {
+                    jobInfo.setId(UUID.randomUUID().toString());
+                }
             }
         }
         this.remoteJobInfos = remoteJobInfos;
@@ -71,45 +72,50 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
 
     @Override
     protected boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException {
+        boolean changed = false;
         if (CollectionUtils.isNotEmpty(remoteJobInfos)) {
-            for (RemoteJobInfo jobInfo : remoteJobInfos) {
-                log.info("Last successful build check api:" + RemoteJobResultUtils.getLastSuccessfulBuildApiUrl(
-                        jobInfo.getRemoteJenkinsServer(), jobInfo.getRemoteJobName()));
-                // get last remote successful build
-                try {
-                    SourceMap result = RemoteJobResultUtils.requestLastSuccessfulBuild(
-                            job, jobInfo.getRemoteJenkinsServer(), jobInfo.getRemoteJobName());
-                    if (result != null) {
-                        Integer lastSuccessfulBuildNumber = result.integerValue("number");
+            try {
+                for (RemoteJobInfo jobInfo : remoteJobInfos) {
+                    // get next build number
+                    Integer nextBuildNumber = RemoteJobResultUtils.requestNextBuildNumber(job, jobInfo);
+                    if (nextBuildNumber != null) {
+                        int lastCheckedNumber = RemoteJobResultUtils.getLastCheckedNumber(job, jobInfo);
+                        // checked remote build
+                        for (int number = nextBuildNumber - 1; number > lastCheckedNumber; number--) {
+                            SourceMap result = RemoteJobResultUtils.requestBuildResult(job, jobInfo, number);
+                            if (result != null) {
+                                Integer buildNumber = result.integerValue("number");
 
-                        log.info("Last successful build url: " + result.stringValue("url"));
-                        log.info("Last successful build number: " + lastSuccessfulBuildNumber);
-
-                        // compare with local cache
-                        Integer localCacheBuildNumber = RemoteJobResultUtils.getLocalCacheBuildNumber(
-                                job, jobInfo.getRemoteJenkinsServer(), jobInfo.getRemoteJobName()
-                        );
-                        if (localCacheBuildNumber == null || !localCacheBuildNumber.equals(lastSuccessfulBuildNumber)) {
-                            // changed
-                            log.info("Need trigger, local cache build number: " + localCacheBuildNumber);
-                            // cache
-                            RemoteJobResultUtils.saveLastSuccessfulBuild(
-                                    job, jobInfo, result
-                            );
-                            return true;
+                                log.info("Last build url: " + result.stringValue("url"));
+                                log.info("Last build number: " + buildNumber);
+                                // check need trigger
+                                if (jobInfo.getTriggerResults().contains(result.stringValue("result"))) {
+                                    // changed
+                                    log.info("Need trigger, remote build result: " + result.stringValue("result"));
+                                    // cache
+                                    RemoteJobResultUtils.saveBuildInfo(job, jobInfo, result);
+                                    changed = true;
+                                    break;
+                                }
+                            } else {
+                                // remote server has been deleted
+                                throw new XTriggerException("Can't get remote build result, Server maybe deleted");
+                            }
                         }
+                        // saved checked number
+                        RemoteJobResultUtils.saveLastCheckedNumber(job, jobInfo, nextBuildNumber - 1);
                     }
-                } catch (IOException e) {
-                    throw new XTriggerException("Request last remote have a io exception", e);
-                } catch (JenkinsRemoteUnSuccessRequestStatusException e) {
-                    // if status is 404, maybe didn't have a successful build
-                    if (e.getStatus() != 404) {
-                        throw new XTriggerException("Request last remote successful job fail", e);
-                    }
+                }
+            } catch (IOException e) {
+                throw new XTriggerException("Request last remote have a io exception", e);
+            } catch (UnSuccessfulRequestStatusException e) {
+                // if status is 404, maybe didn't have a successful build
+                if (e.getStatus() != 404) {
+                    throw new XTriggerException("Request last remote successful job fail", e);
                 }
             }
         }
-        return false;
+        return changed;
     }
 
     @Override
@@ -185,7 +191,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
          * <p>
          * Can be overridden to store descriptor-specific information.
          *
-         * @param req
+         * @param req StaplerRequest
          * @param json The JSON object that captures the configuration data for this {@link hudson.model.Descriptor}.
          *             See <a href="https://www.jenkins.io/doc/developer/forms/structured-form-submission/">the developer documentation</a>.
          * @return false

@@ -7,16 +7,22 @@
     </f:invisibleEntry>
 
     <f:entry title="Remote Jenkins Server"
-             help="/descriptor/io.jenkins.plugins.remote.result.trigger.RemoteJobInfo/help/remoteJenkinsServer">
-        <f:select field="remoteJenkinsServer"/>
+             help="/descriptor/io.jenkins.plugins.remote.result.trigger.RemoteJobInfo/help/remoteServer">
+        <f:select field="remoteServer"/>
     </f:entry>
 
     <f:entry title="Remote Job Name" field="remoteJobName">
         <f:textbox/>
     </f:entry>
 
-    <f:entry title="Remote Job Replacement(Optional)" field="remoteJobReplacement"
-             help="/descriptor/io.jenkins.plugins.remote.result.trigger.RemoteJobInfo/help/remoteJobReplacement">
+    <f:entry title="Trigger With Build Result" field="triggerResults">
+        <j:forEach var="item" items="${descriptor.getBuildResults()}">
+            <f:checkbox title="${item}" checked="${instance.isTriggerResultChecked(item)}"/>&amp;nbsp;&amp;nbsp;
+        </j:forEach>
+    </f:entry>
+
+    <f:entry title="Unique Identifier(Optional)" field="uid"
+             help="/descriptor/io.jenkins.plugins.remote.result.trigger.RemoteJobInfo/help/uid">
         <f:textbox/>
     </f:entry>
 

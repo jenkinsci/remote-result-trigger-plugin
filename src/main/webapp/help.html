@@ -10,52 +10,51 @@
         <dd>The remote build timestamp, such as "1676017363424".</dd>
 
         <dt>REMOTE_BUILD_URL</dt>
-        <dd>Full URL of this build, like <code>https://server:port/jenkins/job/foo/15/</code> (<i>Jenkins URL</i> must be
+        <dd>Full URL of this build, like <code>https://server:port/jenkins/job/foo/15/</code> (<i>Jenkins URL</i> must
+            be
             set).
         </dd>
 
-        <dt>REMOTE_JOB_NAME</dt>
-        <dd>The Configuration of <b>Remote Job Name</b></dd>
-
-        <dt>REMOTE_JOB_ID</dt>
-        <dd>The Configuration of <b>Remote Job Id(Optional)</b></dd>
+        <dt>REMOTE_BUILD_RESULT</dt>
+        <dd>The remote build result, such as "SUCCESS", "UNSTABLE", "FAILURE", "NOT_BUILT", "ABORTED".</dd>
 
         <dt>REMOTE_${PARAMETER_NAME}</dt>
         <dd>
             <p>If remote job use buildWithParameters, use remote parameters replace ${PARAMETER_NAME}.</p>
 
             See the <a href="https://www.jenkins.io/redirect/parameterized-builds"
-                       rel="noopener noreferrer" target="_blank">Parameterized Builds documentation</a> for more information about
+                       rel="noopener noreferrer" target="_blank">Parameterized Builds documentation</a> for more
+            information about
             this feature.
         </dd>
     </dl>
 
     <p>Monitor More than One Job</p>
-    <p>The <b>Remote Job Replacement(Optional)</b> used to replace injected envs, If didn't set, it will be replace with <b>Remote Job Name</b></p>
+    <p>The <b>Unique Identifier(Optional)</b> used to replace injected envs, If didn't set, it will be replace with <b>Remote
+        Job Name</b></p>
     <dl>
-        <dt>REMOTE_${RemoteJobReplacement}_BUILD_NUMBER</dt>
+        <dt>REMOTE_${uid}_BUILD_NUMBER</dt>
         <dd>The remote build number, such as "153".</dd>
 
-        <dt>REMOTE_${RemoteJobReplacement}_BUILD_TIMESTAMP</dt>
+        <dt>REMOTE_${uid}_BUILD_TIMESTAMP</dt>
         <dd>The remote build timestamp, such as "1676017363424".</dd>
 
-        <dt>REMOTE_${RemoteJobReplacement}_BUILD_URL</dt>
-        <dd>Full URL of this build, like <code>https://server:port/jenkins/job/foo/15/</code> (<i>Jenkins URL</i> must be
+        <dt>REMOTE_${uid}_BUILD_URL</dt>
+        <dd>Full URL of this build, like <code>https://server:port/jenkins/job/foo/15/</code> (<i>Jenkins URL</i> must
+            be
             set).
         </dd>
 
-        <dt>REMOTE_${RemoteJobReplacement}_JOB_NAME</dt>
-        <dd>The Configuration of <b>Remote Job Name</b></dd>
+        <dt>REMOTE_${uid}_BUILD_RESULT</dt>
+        <dd>The remote build result, such as "SUCCESS", "UNSTABLE", "FAILURE", "NOT_BUILT", "ABORTED".</dd>
 
-        <dt>REMOTE_${RemoteJobReplacement}_JOB_ID</dt>
-        <dd>The Configuration of <b>Remote Job Id(Optional)</b></dd>
-
-        <dt>REMOTE_${RemoteJobReplacement}_${PARAMETER_NAME}</dt>
+        <dt>REMOTE_${uid}_${PARAMETER_NAME}</dt>
         <dd>
             <p>If remote job use buildWithParameters, use remote parameters replace ${PARAMETER_NAME}.</p>
 
             See the <a href="https://www.jenkins.io/redirect/parameterized-builds"
-                       rel="noopener noreferrer" target="_blank">Parameterized Builds documentation</a> for more information about
+                       rel="noopener noreferrer" target="_blank">Parameterized Builds documentation</a> for more
+            information about
             this feature.
         </dd>
     </dl>

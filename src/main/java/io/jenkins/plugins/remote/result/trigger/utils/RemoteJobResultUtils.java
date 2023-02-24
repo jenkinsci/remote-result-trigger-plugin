@@ -8,7 +8,7 @@ import hudson.model.BuildableItem;
 import hudson.model.Item;
 import io.jenkins.plugins.remote.result.trigger.RemoteJenkinsServer;
 import io.jenkins.plugins.remote.result.trigger.RemoteJobInfo;
-import io.jenkins.plugins.remote.result.trigger.exceptions.JenkinsRemoteUnSuccessRequestStatusException;
+import io.jenkins.plugins.remote.result.trigger.exceptions.UnSuccessfulRequestStatusException;
 import io.jenkins.plugins.remote.result.trigger.utils.ssl.SSLSocketManager;
 import okhttp3.*;
 import org.apache.commons.io.FileUtils;
@@ -27,23 +27,162 @@ import java.util.Map;
  * Remote Result Result Cache
  *
  * @author HW
- * @date 2023/02/15 13:41
  */
 public class RemoteJobResultUtils {
     /**
-     * do api request
+     * get remote job next build number
      *
-     * @param job
-     * @param remoteJenkinsServer
-     * @param jobName
+     * @param job     Jenkins job
+     * @param jobInfo remote Job info
      * @return
+     * @throws UnSuccessfulRequestStatusException
      * @throws IOException
      */
-    public static SourceMap requestLastSuccessfulBuild(Item job, String remoteJenkinsServer, String jobName) throws IOException, JenkinsRemoteUnSuccessRequestStatusException {
+    public static Integer requestNextBuildNumber(Item job, RemoteJobInfo jobInfo)
+            throws UnSuccessfulRequestStatusException, IOException {
+        SourceMap result = requestRemoteApi(job, jobInfo, "/api/json");
+        if (result != null) {
+            return result.integerValue("nextBuildNumber");
+        }
+        return null;
+    }
+
+    /**
+     * get remote job result
+     *
+     * @param job     Jenkins job
+     * @param jobInfo remote Job info
+     * @param number  build nubmer
+     * @return api result
+     * @throws UnSuccessfulRequestStatusException
+     * @throws IOException
+     */
+    public static SourceMap requestBuildResult(Item job, RemoteJobInfo jobInfo, int number)
+            throws UnSuccessfulRequestStatusException, IOException {
+        return requestRemoteApi(job, jobInfo, "/" + number + "/api/json");
+    }
+
+    /**
+     * last checked build number
+     *
+     * @param job     Jenkins job
+     * @param jobInfo remote Job info
+     * @return last checked number
+     * @throws IOException
+     */
+    public static int getLastCheckedNumber(Item job, RemoteJobInfo jobInfo) throws IOException {
+        SavedJobInfo savedJobInfo = getSavedJobInfo(job, jobInfo);
+        return savedJobInfo == null ? 0 : savedJobInfo.getCheckedNumber();
+    }
+
+    /**
+     * save build checked number
+     *
+     * @param job     Jenkins job
+     * @param jobInfo remote Job info
+     * @param number  checked number
+     * @throws IOException
+     */
+    public static void saveLastCheckedNumber(BuildableItem job, RemoteJobInfo jobInfo, int number) throws IOException {
+        SavedJobInfo savedJobInfo = getSavedJobInfo(job, jobInfo);
+        if (savedJobInfo == null) {
+            savedJobInfo = new SavedJobInfo();
+        }
+
+        savedJobInfo.setCheckedNumber(number);
+
+        saveBuildInfo(job, savedJobInfo);
+    }
+
+    /**
+     * save build info
+     *
+     * @param job          Jenkins job
+     * @param jobInfo      remote Job info
+     * @param remoteResult api result
+     */
+    public static void saveBuildInfo(BuildableItem job, RemoteJobInfo jobInfo, SourceMap remoteResult) throws IOException {
+        SavedJobInfo savedJobInfo = getSavedJobInfo(job, jobInfo);
+        if (savedJobInfo == null) {
+            savedJobInfo = new SavedJobInfo();
+        }
+
+        savedJobInfo.setRemoteServer(jobInfo.getRemoteServer());
+        savedJobInfo.setRemoteJob(jobInfo.getId());
+        savedJobInfo.setRemoteJobName(jobInfo.getRemoteJobName());
+        savedJobInfo.setUid(jobInfo.getUid());
+        savedJobInfo.setResult(remoteResult.getSource());
+
+        saveBuildInfo(job, savedJobInfo);
+    }
+
+    /**
+     * save build info to file
+     *
+     * @param job          Jenkins job
+     * @param savedJobInfo save info
+     * @throws IOException
+     */
+    private static void saveBuildInfo(BuildableItem job, SavedJobInfo savedJobInfo) throws IOException {
+        // get saved list
+        List<SavedJobInfo> savedJobInfos = getSavedJobInfos(job);
+        // remove old
+        savedJobInfos.removeIf(
+                info -> info.getRemoteServer().equals(savedJobInfo.getRemoteServer())
+                        && info.getRemoteJob().equals(savedJobInfo.getRemoteJob())
+        );
+        savedJobInfos.add(savedJobInfo);
+        // save to file
+        File file = getRemoteResultConfigFile(job);
+        if (!file.getParentFile().exists()) {
+            FileUtils.forceMkdirParent(file);
+        }
+        String string = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(savedJobInfos);
+        FileUtils.writeStringToFile(file, string, StandardCharsets.UTF_8);
+    }
+
+    /**
+     * get remote result envs
+     *
+     * @param job Jenkins job
+     * @return envs
+     * @throws IOException
+     */
+    public static Map<String, String> getJobRemoteResultEnvs(Item job) throws IOException {
+        Map<String, String> envs = new HashMap<>();
+        List<SavedJobInfo> savedJobInfos = getSavedJobInfos(job);
+        for (int i = 0; i < savedJobInfos.size(); i++) {
+            SavedJobInfo savedJobInfo = savedJobInfos.get(i);
+            // only one
+            if (i == 0) {
+                envs.putAll(generateEnvs("REMOTE_", savedJobInfo));
+            }
+            // prefix with job id
+            String prefix = new StringBuilder("REMOTE_")
+                    .append(StringUtils.isNotEmpty(savedJobInfo.getUid()) ? savedJobInfo.uid : savedJobInfo.remoteJobName)
+                    .append("_")
+                    .toString();
+            envs.putAll(generateEnvs(prefix, savedJobInfo));
+        }
+        return envs;
+    }
+
+    /**
+     * do api request
+     *
+     * @param job     Jenkins job
+     * @param jobInfo remote Job info
+     * @param apiUrl  api url
+     * @return api result
+     * @throws IOException
+     */
+    private static SourceMap requestRemoteApi(Item job, RemoteJobInfo jobInfo, String apiUrl)
+            throws IOException, UnSuccessfulRequestStatusException {
         // OkHttp Client
         OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
 
-        RemoteJenkinsServer remoteServer = RemoteJenkinsServerUtils.getRemoteJenkinsServer(remoteJenkinsServer);
+        RemoteJenkinsServer remoteServer = RemoteJenkinsServerUtils
+                .getRemoteJenkinsServer(jobInfo.getRemoteServer());
 
         // remote server configuration deleted
         if (remoteServer == null) {
@@ -67,7 +206,12 @@ public class RemoteJobResultUtils {
         }
 
         // api url
-        Request request = requestBuilder.url(getLastSuccessfulBuildApiUrl(remoteJenkinsServer, jobName)).get().build();
+        String url = new StringBuilder(remoteServer.getUrl())
+                .append(remoteServer.getUrl().endsWith("/") ? "" : "/")
+                .append("job/").append(jobInfo.getRemoteJobName())
+                .append(apiUrl)
+                .toString();
+        Request request = requestBuilder.url(url).get().build();
 
         Call call = okHttpClient.newCall(request);
         try (Response response = call.execute()) {
@@ -81,157 +225,74 @@ public class RemoteJobResultUtils {
                     return SourceMap.of(mapper.readValue(body, Map.class));
                 }
             } else {
-                throw new JenkinsRemoteUnSuccessRequestStatusException("Remote Request Error", response.code());
+                throw new UnSuccessfulRequestStatusException("Response UnSuccess Code:" + response.code() + ",Url:" + url, response.code(), url);
             }
         }
         return null;
     }
 
     /**
-     * get lastSuccessfulBuild api url
+     * get saved job info
      *
-     * @param remoteJenkinsServer
-     * @param jobName
-     * @return
-     */
-    public static String getLastSuccessfulBuildApiUrl(String remoteJenkinsServer, String jobName) {
-        RemoteJenkinsServer remoteServer = RemoteJenkinsServerUtils.getRemoteJenkinsServer(remoteJenkinsServer);
-        if (remoteServer != null) {
-            return new StringBuilder(remoteServer.getUrl())
-                    .append(remoteServer.getUrl().endsWith("/") ? "" : "/")
-                    .append("job/").append(jobName)
-                    .append("/lastSuccessfulBuild/api/json")
-                    .toString();
-        }
-        return null;
-    }
-
-    /**
-     * local cache build number
-     *
-     * @param job
-     * @param remoteServer
-     * @param remoteJob
-     * @return
+     * @param job     Jenkins job
+     * @param jobInfo remote Job info
+     * @return saved job info
      * @throws IOException
      */
-    public static Integer getLocalCacheBuildNumber(Item job, String remoteServer, String remoteJob) throws IOException {
-        List<Result> results = getJobRemoteResults(job);
-        for (Result result : results) {
-            if (StringUtils.equals(remoteServer, result.getRemoteServer()) && StringUtils.equals(remoteJob, result.getRemoteJob())) {
-                return result.getBuildNumber();
-            }
-        }
-        return null;
+    private static SavedJobInfo getSavedJobInfo(Item job, RemoteJobInfo jobInfo) throws IOException {
+        List<SavedJobInfo> savedJobInfos = getSavedJobInfos(job);
+        return savedJobInfos.stream().filter(
+                savedJobInfo -> savedJobInfo.getRemoteServer().equals(jobInfo.getRemoteServer())
+                        && savedJobInfo.getRemoteJob().equals(jobInfo.getId())
+        ).findAny().orElse(null);
     }
 
     /**
-     * save build info
+     * get saved job infos
      *
-     * @param job
-     * @param jobInfo
-     * @param remoteResult
-     */
-    public static void saveLastSuccessfulBuild(BuildableItem job, RemoteJobInfo jobInfo, SourceMap remoteResult) throws IOException {
-        // build cache info
-        // get cached list and remove cached job
-        List<Result> cachedList = getJobRemoteResults(job);
-        cachedList.removeIf(result -> StringUtils.equals(jobInfo.getRemoteJenkinsServer(), result.getRemoteServer()) && StringUtils.equals(jobInfo.getId(), result.getRemoteJob()));
-        // add
-        Result result = new Result();
-        result.setRemoteServer(jobInfo.getRemoteJenkinsServer());
-        result.setRemoteJob(jobInfo.getId());
-        result.setRemoteJobName(jobInfo.getRemoteJobName());
-        result.setRemoteJobReplacement(jobInfo.getRemoteJobReplacement());
-        result.setBuildNumber(remoteResult.integerValue("number"));
-        result.setResult(remoteResult.getSource());
-        cachedList.add(result);
-
-        // cache
-        File file = getJobRemoteResultFile(job);
-        if (!file.getParentFile().exists()) {
-            FileUtils.forceMkdirParent(file);
-        }
-        String string = new ObjectMapper().writeValueAsString(cachedList);
-        FileUtils.writeStringToFile(file, string, StandardCharsets.UTF_8);
-    }
-
-    /**
-     * get remote result envs
-     *
-     * @param job
-     * @return
+     * @param job Jenkins job
+     * @return saved job infos
      * @throws IOException
      */
-    public static Map<String, String> getJobRemoteResultEnvs(Item job) throws IOException {
-        Map<String, String> envs = new HashMap<>();
-        List<Result> results = getJobRemoteResults(job);
-        for (int i = 0; i < results.size(); i++) {
-            Result result = results.get(i);
-            // only one
-            if (i == 0) {
-                envs.putAll(generateEnvs("REMOTE_", result));
-            }
-            // prefix with job id
-            String prefix = new StringBuilder("REMOTE_")
-                    .append(StringUtils.isNotEmpty(result.getRemoteJobReplacement()) ? result.remoteJobReplacement : result.remoteJobName)
-                    .append("_")
-                    .toString();
-            envs.putAll(generateEnvs(prefix, result));
-        }
-        return envs;
-    }
-
-    /**
-     * get cache result
-     *
-     * @param job
-     * @return
-     * @throws IOException
-     */
-    private static List<Result> getJobRemoteResults(Item job) throws IOException {
-        File file = getJobRemoteResultFile(job);
+    private static List<SavedJobInfo> getSavedJobInfos(Item job) throws IOException {
+        File file = getRemoteResultConfigFile(job);
         if (file.exists()) {
             ObjectMapper mapper = new ObjectMapper();
             mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            CollectionType collectionType = TypeFactory.defaultInstance().constructCollectionType(List.class, Result.class);
+            CollectionType collectionType = TypeFactory.defaultInstance().constructCollectionType(List.class, SavedJobInfo.class);
             return mapper.readValue(file, collectionType);
         }
         return new ArrayList<>();
     }
 
     /**
-     * get remote result cache file
+     * get remote result config file
      *
-     * @param job
-     * @return
+     * @param job Jenkins job
+     * @return config file
      */
-    private static File getJobRemoteResultFile(Item job) {
+    private static File getRemoteResultConfigFile(Item job) {
         return new File(job.getRootDir().getAbsolutePath() + "/remote-build-result.json");
     }
 
     /**
      * Generate envs
      *
-     * @param prefix
-     * @param result
-     * @return
+     * @param prefix       prefix
+     * @param savedJobInfo saved info
+     * @return envs
      */
-    private static Map<String, String> generateEnvs(String prefix, Result result) {
+    private static Map<String, String> generateEnvs(String prefix, SavedJobInfo savedJobInfo) {
         Map<String, String> envs = new HashMap<>();
-        SourceMap sourceMap = SourceMap.of(result.result);
+        SourceMap sourceMap = SourceMap.of(savedJobInfo.result);
         // BUILD_NUMBER
         envs.put(prefix + "BUILD_NUMBER", sourceMap.stringValue("number"));
         // TIMESTAMP
         envs.put(prefix + "BUILD_TIMESTAMP", sourceMap.stringValue("timestamp"));
         // BUILD_URL
         envs.put(prefix + "BUILD_URL", sourceMap.stringValue("url"));
-        // JOB_NAME
-        envs.put(prefix + "JOB_NAME", result.getRemoteJobName());
-        // JOB_ID
-        if (StringUtils.isNotEmpty(result.getRemoteJobReplacement())) {
-            envs.put(prefix + "JOB_ID", result.getRemoteJobReplacement());
-        }
+        // BUILD_RESULT
+        envs.put(prefix + "BUILD_RESULT", sourceMap.stringValue("result"));
 
         // Parameters
         List<Map> actions = sourceMap.listValue("actions", Map.class);
@@ -264,12 +325,12 @@ public class RemoteJobResultUtils {
     /**
      * Info
      */
-    public static class Result {
+    public static class SavedJobInfo {
         private String remoteServer;
         private String remoteJob;
         private String remoteJobName;
-        private String remoteJobReplacement;
-        private Integer buildNumber;
+        private String uid;
+        private Integer checkedNumber;
         private Map<String, Object> result;
 
         public String getRemoteServer() {
@@ -296,20 +357,20 @@ public class RemoteJobResultUtils {
             this.remoteJobName = remoteJobName;
         }
 
-        public String getRemoteJobReplacement() {
-            return remoteJobReplacement;
+        public String getUid() {
+            return uid;
         }
 
-        public void setRemoteJobReplacement(String remoteJobReplacement) {
-            this.remoteJobReplacement = remoteJobReplacement;
+        public void setUid(String uid) {
+            this.uid = uid;
         }
 
-        public Integer getBuildNumber() {
-            return buildNumber;
+        public Integer getCheckedNumber() {
+            return checkedNumber;
         }
 
-        public void setBuildNumber(Integer buildNumber) {
-            this.buildNumber = buildNumber;
+        public void setCheckedNumber(Integer checkedNumber) {
+            this.checkedNumber = checkedNumber;
         }
 
         public Map<String, Object> getResult() {

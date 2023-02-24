@@ -39,7 +39,7 @@ public class RemoteJenkinsServer implements Describable<RemoteJenkinsServer>, Se
      */
     @Override
     public Descriptor<RemoteJenkinsServer> getDescriptor() {
-        return new DescriptorImpl();
+        return Jenkins.get().getDescriptor(getClass());
     }
 
     private String id;

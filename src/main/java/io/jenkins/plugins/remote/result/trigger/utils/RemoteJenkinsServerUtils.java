@@ -9,14 +9,13 @@ import org.apache.commons.lang.StringUtils;
  * Global Jenkins Server Tool
  *
  * @author HW
- * @date 2023/02/20 17:03
  */
 public class RemoteJenkinsServerUtils {
 
     /**
      * get fill server names
      *
-     * @return
+     * @return server names
      */
     public static RemoteJenkinsServer[] getRemoteServers() {
         RemoteBuildResultTrigger.RemoteBuildResultTriggerDescriptor trigger =
@@ -29,8 +28,8 @@ public class RemoteJenkinsServerUtils {
     /**
      * get RemoteJenkinsServer
      *
-     * @param id
-     * @return
+     * @param id remote server uid
+     * @return remote server
      */
     public static RemoteJenkinsServer getRemoteJenkinsServer(String id) {
         RemoteBuildResultTrigger.RemoteBuildResultTriggerDescriptor trigger =

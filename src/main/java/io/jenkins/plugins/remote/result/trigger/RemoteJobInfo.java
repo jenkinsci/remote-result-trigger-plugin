@@ -16,20 +16,26 @@ import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Remote Job Configuration
  *
  * @author HW
- * @date 2023/02/20 14:31
  */
 public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
     private static final long serialVersionUID = -7232627326475916056L;
+    /**
+     * All job build results
+     */
+    private static final String[] ALL_BUILD_RESULT = new String[]{"SUCCESS", "UNSTABLE", "FAILURE", "NOT_BUILT", "ABORTED"};
 
     private String id;
-    private String remoteJenkinsServer;
+    private String remoteServer;
     private String remoteJobName;
-    private String remoteJobReplacement;
+    private String uid;
+    private List<String> triggerResults = new ArrayList<>();
 
     @DataBoundConstructor
     public RemoteJobInfo() {
@@ -46,7 +52,7 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
      */
     @Override
     public Descriptor<RemoteJobInfo> getDescriptor() {
-        return new DescriptorImpl();
+        return Jenkins.get().getDescriptor(getClass());
     }
 
     public String getId() {
@@ -58,13 +64,13 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
         this.id = id;
     }
 
-    public String getRemoteJenkinsServer() {
-        return remoteJenkinsServer;
+    public String getRemoteServer() {
+        return remoteServer;
     }
 
     @DataBoundSetter
-    public void setRemoteJenkinsServer(String remoteJenkinsServer) {
-        this.remoteJenkinsServer = remoteJenkinsServer;
+    public void setRemoteServer(String remoteServer) {
+        this.remoteServer = remoteServer;
     }
 
     public String getRemoteJobName() {
@@ -76,41 +82,93 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
         this.remoteJobName = remoteJobName;
     }
 
-    public String getRemoteJobReplacement() {
-        return remoteJobReplacement;
+    public String getUid() {
+        return uid;
     }
 
     @DataBoundSetter
-    public void setRemoteJobReplacement(String remoteJobReplacement) {
-        this.remoteJobReplacement = remoteJobReplacement;
+    public void setUid(String uid) {
+        this.uid = uid;
+    }
+
+    public List<String> getTriggerResults() {
+        return triggerResults;
+    }
+
+    /**
+     * Check if selected
+     *
+     * @param result need check result
+     * @return is selected
+     */
+    public Boolean isTriggerResultChecked(String result) {
+        return triggerResults.contains(result);
+    }
+
+    /**
+     * spec set triggerResults with checked list
+     *
+     * @param triggerResults trigger result list
+     */
+    @DataBoundSetter
+    public void setTriggerResults(List<Boolean> triggerResults) {
+        this.triggerResults = new ArrayList<>();
+        for (int i = 0; i < ALL_BUILD_RESULT.length; i++) {
+            if (triggerResults.get(i)) {
+                this.triggerResults.add(ALL_BUILD_RESULT[i]);
+            }
+        }
     }
 
     @Extension
     public static class DescriptorImpl extends Descriptor<RemoteJobInfo> {
+        /**
+         * get build result types
+         *
+         * @return all build results
+         */
+        public static String[] getBuildResults() {
+            return ALL_BUILD_RESULT;
+        }
 
         /**
-         * Validates the remoteJenkinsServer
+         * Validates the remoteServer
          *
-         * @param remoteJenkinsServer Remote Jenkins Server to be validated
+         * @param remoteServer Remote Jenkins Server to be validated
          * @return FormValidation object
          */
         @POST
         @Restricted(NoExternalUse.class)
-        public FormValidation doCheckRemoteJenkinsServer(@QueryParameter String remoteJenkinsServer) {
-            if (StringUtils.isEmpty(remoteJenkinsServer)) {
+        public FormValidation doCheckRemoteServer(@QueryParameter String remoteServer) {
+            if (StringUtils.isEmpty(remoteServer)) {
                 return FormValidation.error("Please select a remote Jenkins Server");
             }
             return FormValidation.ok();
         }
 
         /**
-         * fill remoteJenkinsServer select
+         * Validates the jobName
          *
-         * @return
+         * @param remoteJobName Remote JobName
+         * @return FormValidation object
          */
         @POST
         @Restricted(NoExternalUse.class)
-        public ListBoxModel doFillRemoteJenkinsServerItems(@QueryParameter String remoteJenkinsServer) {
+        public FormValidation doCheckRemoteJobName(@QueryParameter String remoteJobName) {
+            if (StringUtils.isEmpty(remoteJobName)) {
+                return FormValidation.error("Please enter a job name");
+            }
+            return FormValidation.ok();
+        }
+
+        /**
+         * fill remoteServer select
+         *
+         * @return fill list model
+         */
+        @POST
+        @Restricted(NoExternalUse.class)
+        public ListBoxModel doFillRemoteServerItems(@QueryParameter String remoteJenkinsServer) {
             ListBoxModel model = new ListBoxModel();
 
             model.add("");
