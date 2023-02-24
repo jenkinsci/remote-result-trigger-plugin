@@ -8,16 +8,17 @@
         <relativePath/>
     </parent>
 
-    <properties>
-        <jenkins.version>2.361.4</jenkins.version>
-    </properties>
-
     <groupId>io.jenkins.plugins</groupId>
     <artifactId>remote-result-trigger</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>${changelist}</version>
     <packaging>hpi</packaging>
     <name>Remote Result Trigger Plugin</name>
     <description>Trigger with remote build result</description>
+
+    <properties>
+        <changelist>999999-SNAPSHOT</changelist>
+        <jenkins.version>2.361.4</jenkins.version>
+    </properties>
 
     <licenses>
         <license>
