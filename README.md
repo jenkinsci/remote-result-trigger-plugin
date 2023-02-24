@@ -39,4 +39,4 @@ Manage Jenkins > Configure System > Remote Result Trigger Configuration > Remote
 
 ### Set Build Trigger
 Job > Build Triggers > Checked Remote Build Result Trigger
-![](screenshots/20230221153255.png)
+![](screenshots/20230224172446.png)
