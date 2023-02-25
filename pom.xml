@@ -10,12 +10,13 @@
 
     <groupId>io.jenkins.plugins</groupId>
     <artifactId>remote-result-trigger</artifactId>
-    <version>${changelist}</version>
+    <version>${revision}.${changelist}</version>
     <packaging>hpi</packaging>
     <name>Remote Result Trigger Plugin</name>
     <description>Trigger with remote build result</description>
 
     <properties>
+        <revision>1</revision>
         <changelist>999999-SNAPSHOT</changelist>
         <jenkins.version>2.361.4</jenkins.version>
     </properties>
