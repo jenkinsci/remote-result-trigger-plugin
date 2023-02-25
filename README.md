@@ -7,6 +7,8 @@ A plugin for Jenkins CI  that gives you the ability to monitor successful build 
 
 Build project and pull docker images on a remote server（having public ip）, Customer didn't having a public ip and we dont want to share source code.
 
+![](screenshots/2023021501.png)
+
 ## Instructions
 Enable the trigger within the "Remote Build Result Trigger" section of the build's configuration page.  
 When remote server build successful, plugin will trigger a local build and inject remote envs to job.
@@ -30,13 +32,11 @@ If monitor more than one remote job
 | REMOTE_${uid}_BUILD_RESULT                 | The remote build result, such as "SUCCESS", "UNSTABLE", "FAILURE", "NOT_BUILT", "ABORTED".                                                        |
 | REMOTE_${uid}\_PARAMETER_${PARAMETER_NAME} | If remote job use buildWithParameters, use remote parameters replace ${PARAMETER_NAME}.                                                           |
 
-
-![](screenshots/2023021501.png)
 ## Configuration
 ### Add Remote Server  
-Manage Jenkins > Configure System > Remote Result Trigger Configuration > Remote Jenkins Server
+Manage Jenkins > Configure System > Remote Result Trigger Configuration > Remote Jenkins Server  
 ![](screenshots/20230221153031.png)
 
 ### Set Build Trigger
-Job > Build Triggers > Checked Remote Build Result Trigger
+Job > Build Triggers > Checked Remote Build Result Trigger  
 ![](screenshots/20230224172446.png)
