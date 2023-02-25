@@ -14,6 +14,7 @@
     <packaging>hpi</packaging>
     <name>Remote Result Trigger Plugin</name>
     <description>Trigger with remote build result</description>
+    <url>https://github.com/jenkinsci/remote-result-trigger-plugin</url>
 
     <properties>
         <revision>1</revision>
