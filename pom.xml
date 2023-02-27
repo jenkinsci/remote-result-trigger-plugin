@@ -40,7 +40,7 @@
         <connection>scm:git:https://github.com/jenkinsci/remote-result-trigger-plugin.git</connection>
         <developerConnection>scm:git:https://github.com/jenkinsci/remote-result-trigger-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/remote-result-trigger-plugin</url>
-        <tag>HEAD</tag>
+        <tag>${scmTag}</tag>
     </scm>
 
 
