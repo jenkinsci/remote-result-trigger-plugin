@@ -63,33 +63,33 @@ public class RemoteJobResultUtils {
     }
 
     /**
-     * last checked build number
+     * last trigger build number
      *
      * @param job     Jenkins job
      * @param jobInfo remote Job info
-     * @return last checked number
+     * @return last trigger number
      * @throws IOException
      */
-    public static int getLastCheckedNumber(Item job, RemoteJobInfo jobInfo) throws IOException {
+    public static int getTriggerNumber(Item job, RemoteJobInfo jobInfo) throws IOException {
         SavedJobInfo savedJobInfo = getSavedJobInfo(job, jobInfo);
-        return savedJobInfo == null ? 0 : savedJobInfo.getCheckedNumber();
+        return savedJobInfo == null ? 0 : savedJobInfo.getTriggerNumber();
     }
 
     /**
-     * save build checked number
+     * save build trigger number
      *
      * @param job     Jenkins job
      * @param jobInfo remote Job info
-     * @param number  checked number
+     * @param number  trigger number
      * @throws IOException
      */
-    public static void saveLastCheckedNumber(BuildableItem job, RemoteJobInfo jobInfo, int number) throws IOException {
+    public static void saveTriggerNumber(BuildableItem job, RemoteJobInfo jobInfo, int number) throws IOException {
         SavedJobInfo savedJobInfo = getSavedJobInfo(job, jobInfo);
         if (savedJobInfo == null) {
             savedJobInfo = new SavedJobInfo();
         }
 
-        savedJobInfo.setCheckedNumber(number);
+        savedJobInfo.setTriggerNumber(number);
 
         saveBuildInfo(job, savedJobInfo);
     }
@@ -330,7 +330,7 @@ public class RemoteJobResultUtils {
         private String remoteJob;
         private String remoteJobName;
         private String uid;
-        private Integer checkedNumber;
+        private Integer triggerNumber;
         private Map<String, Object> result;
 
         public String getRemoteServer() {
@@ -365,12 +365,12 @@ public class RemoteJobResultUtils {
             this.uid = uid;
         }
 
-        public Integer getCheckedNumber() {
-            return checkedNumber;
+        public Integer getTriggerNumber() {
+            return triggerNumber;
         }
 
-        public void setCheckedNumber(Integer checkedNumber) {
-            this.checkedNumber = checkedNumber;
+        public void setTriggerNumber(Integer triggerNumber) {
+            this.triggerNumber = triggerNumber;
         }
 
         public Map<String, Object> getResult() {
