@@ -79,9 +79,9 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                     // get next build number
                     Integer nextBuildNumber = RemoteJobResultUtils.requestNextBuildNumber(job, jobInfo);
                     if (nextBuildNumber != null) {
-                        int lastCheckedNumber = RemoteJobResultUtils.getLastCheckedNumber(job, jobInfo);
+                        int triggerNumber = RemoteJobResultUtils.getTriggerNumber(job, jobInfo);
                         // checked remote build
-                        for (int number = nextBuildNumber - 1; number > lastCheckedNumber; number--) {
+                        for (int number = nextBuildNumber - 1; number > triggerNumber; number--) {
                             SourceMap result = RemoteJobResultUtils.requestBuildResult(job, jobInfo, number);
                             if (result != null) {
                                 Integer buildNumber = result.integerValue("number");
@@ -95,6 +95,8 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                     // cache
                                     RemoteJobResultUtils.saveBuildInfo(job, jobInfo, result);
                                     changed = true;
+                                    // saved trigger number
+                                    RemoteJobResultUtils.saveTriggerNumber(job, jobInfo, buildNumber);
                                     break;
                                 }
                             } else {
@@ -102,8 +104,6 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                 throw new XTriggerException("Can't get remote build result, Server maybe deleted");
                             }
                         }
-                        // saved checked number
-                        RemoteJobResultUtils.saveLastCheckedNumber(job, jobInfo, nextBuildNumber - 1);
                     }
                 }
             } catch (IOException e) {
@@ -191,7 +191,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
          * <p>
          * Can be overridden to store descriptor-specific information.
          *
-         * @param req StaplerRequest
+         * @param req  StaplerRequest
          * @param json The JSON object that captures the configuration data for this {@link hudson.model.Descriptor}.
          *             See <a href="https://www.jenkins.io/doc/developer/forms/structured-form-submission/">the developer documentation</a>.
          * @return false
