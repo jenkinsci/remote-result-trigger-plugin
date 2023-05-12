@@ -1,6 +1,7 @@
 package io.jenkins.plugins.remote.result.trigger;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import hudson.Functions;
 import hudson.Util;
 import hudson.console.AnnotatedLargeText;
 import hudson.model.Action;
@@ -15,7 +16,6 @@ import java.nio.charset.Charset;
  * log action
  *
  * @author HW
- * @date 2023/05/12 14:19
  */
 public class RemoteBuildResultLogAction implements Action {
     private BuildableItem job;
