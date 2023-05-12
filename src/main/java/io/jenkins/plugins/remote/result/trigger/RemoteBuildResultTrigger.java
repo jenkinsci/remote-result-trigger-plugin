@@ -23,6 +23,8 @@ import org.kohsuke.stapler.StaplerRequest;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -114,8 +116,22 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                     throw new XTriggerException("Request last remote successful job fail", e);
                 }
             }
+        } else {
+            log.error("No remote job configured!");
         }
         return changed;
+    }
+
+    /**
+     * {@link Action}s to be displayed in the job page.
+     *
+     * @return can be empty but never null
+     * @since 1.341
+     */
+    @Override
+    public Collection<? extends Action> getProjectActions() {
+        RemoteBuildResultLogAction action = new RemoteBuildResultLogAction(job, getLogFile());
+        return Collections.singleton(action);
     }
 
     @Override
