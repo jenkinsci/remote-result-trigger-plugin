@@ -72,7 +72,7 @@ public class RemoteJobResultUtils {
      */
     public static int getTriggerNumber(Item job, RemoteJobInfo jobInfo) throws IOException {
         SavedJobInfo savedJobInfo = getSavedJobInfo(job, jobInfo);
-        return savedJobInfo == null ? 0 : savedJobInfo.getTriggerNumber();
+        return savedJobInfo == null || savedJobInfo.getTriggerNumber() == null ? 0 : savedJobInfo.getTriggerNumber();
     }
 
     /**
