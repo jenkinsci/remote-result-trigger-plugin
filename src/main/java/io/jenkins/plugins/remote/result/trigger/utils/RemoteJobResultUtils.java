@@ -34,13 +34,11 @@ public class RemoteJobResultUtils {
      *
      * @param job     Jenkins job
      * @param jobInfo remote Job info
-     * @return
-     * @throws UnSuccessfulRequestStatusException
-     * @throws IOException
+     * @return 下一个版本
      */
     public static Integer requestNextBuildNumber(Item job, RemoteJobInfo jobInfo)
             throws UnSuccessfulRequestStatusException, IOException {
-        SourceMap result = requestRemoteApi(job, jobInfo, "/api/json");
+        SourceMap result = requestRemoteApi(job, jobInfo, "job/" + jobInfo.getRemoteJobName() + "/api/json");
         if (result != null) {
             return result.integerValue("nextBuildNumber");
         }
@@ -54,12 +52,23 @@ public class RemoteJobResultUtils {
      * @param jobInfo remote Job info
      * @param number  build nubmer
      * @return api result
-     * @throws UnSuccessfulRequestStatusException
-     * @throws IOException
      */
     public static SourceMap requestBuildResult(Item job, RemoteJobInfo jobInfo, int number)
             throws UnSuccessfulRequestStatusException, IOException {
-        return requestRemoteApi(job, jobInfo, "/" + number + "/api/json");
+        return requestRemoteApi(job, jobInfo, "job/" + jobInfo.getRemoteJobName() + "/" + number + "/api/json");
+    }
+
+    /**
+     * get remote job result json
+     *
+     * @param job      Jenkins job
+     * @param jobInfo  remote Job info
+     * @param buildUrl build url
+     * @return api result
+     */
+    public static SourceMap requestBuildResultJson(Item job, RemoteJobInfo jobInfo, String buildUrl)
+            throws UnSuccessfulRequestStatusException, IOException {
+        return requestRemoteApi(job, jobInfo, "remote-result/result.json?buildUrl=" + buildUrl);
     }
 
     /**
@@ -68,7 +77,6 @@ public class RemoteJobResultUtils {
      * @param job     Jenkins job
      * @param jobInfo remote Job info
      * @return last trigger number
-     * @throws IOException
      */
     public static int getTriggerNumber(Item job, RemoteJobInfo jobInfo) throws IOException {
         SavedJobInfo savedJobInfo = getSavedJobInfo(job, jobInfo);
@@ -81,7 +89,6 @@ public class RemoteJobResultUtils {
      * @param job     Jenkins job
      * @param jobInfo remote Job info
      * @param number  trigger number
-     * @throws IOException
      */
     public static void saveTriggerNumber(BuildableItem job, RemoteJobInfo jobInfo, int number) throws IOException {
         SavedJobInfo savedJobInfo = getSavedJobInfo(job, jobInfo);
@@ -90,6 +97,28 @@ public class RemoteJobResultUtils {
         }
 
         savedJobInfo.setTriggerNumber(number);
+
+        saveBuildInfo(job, savedJobInfo);
+    }
+
+    /**
+     * save build result json
+     *
+     * @param job        Jenkins job
+     * @param jobInfo    remote Job info
+     * @param resultJson result json
+     */
+    public static void saveBuildResultJson(BuildableItem job, RemoteJobInfo jobInfo, SourceMap resultJson) throws IOException {
+        SavedJobInfo savedJobInfo = getSavedJobInfo(job, jobInfo);
+        if (savedJobInfo == null) {
+            savedJobInfo = new SavedJobInfo();
+        }
+
+        savedJobInfo.setRemoteServer(jobInfo.getRemoteServer());
+        savedJobInfo.setRemoteJob(jobInfo.getId());
+        savedJobInfo.setRemoteJobName(jobInfo.getRemoteJobName());
+        savedJobInfo.setUid(jobInfo.getUid());
+        savedJobInfo.setResultJson(resultJson.getSource());
 
         saveBuildInfo(job, savedJobInfo);
     }
@@ -121,7 +150,6 @@ public class RemoteJobResultUtils {
      *
      * @param job          Jenkins job
      * @param savedJobInfo save info
-     * @throws IOException
      */
     private static void saveBuildInfo(BuildableItem job, SavedJobInfo savedJobInfo) throws IOException {
         // get saved list
@@ -146,7 +174,6 @@ public class RemoteJobResultUtils {
      *
      * @param job Jenkins job
      * @return envs
-     * @throws IOException
      */
     public static Map<String, String> getJobRemoteResultEnvs(Item job) throws IOException {
         Map<String, String> envs = new HashMap<>();
@@ -174,7 +201,6 @@ public class RemoteJobResultUtils {
      * @param jobInfo remote Job info
      * @param apiUrl  api url
      * @return api result
-     * @throws IOException
      */
     private static SourceMap requestRemoteApi(Item job, RemoteJobInfo jobInfo, String apiUrl)
             throws IOException, UnSuccessfulRequestStatusException {
@@ -208,7 +234,6 @@ public class RemoteJobResultUtils {
         // api url
         String url = new StringBuilder(remoteServer.getUrl())
                 .append(remoteServer.getUrl().endsWith("/") ? "" : "/")
-                .append("job/").append(jobInfo.getRemoteJobName())
                 .append(apiUrl)
                 .toString();
         Request request = requestBuilder.url(url).get().build();
@@ -237,7 +262,6 @@ public class RemoteJobResultUtils {
      * @param job     Jenkins job
      * @param jobInfo remote Job info
      * @return saved job info
-     * @throws IOException
      */
     private static SavedJobInfo getSavedJobInfo(Item job, RemoteJobInfo jobInfo) throws IOException {
         List<SavedJobInfo> savedJobInfos = getSavedJobInfos(job);
@@ -252,7 +276,6 @@ public class RemoteJobResultUtils {
      *
      * @param job Jenkins job
      * @return saved job infos
-     * @throws IOException
      */
     private static List<SavedJobInfo> getSavedJobInfos(Item job) throws IOException {
         File file = getRemoteResultConfigFile(job);
@@ -318,6 +341,14 @@ public class RemoteJobResultUtils {
             }
         }
 
+        // result json
+        Map<String, Object> resultJson = savedJobInfo.getResultJson();
+        if (resultJson != null) {
+            SourceMap map = SourceMap.of(resultJson);
+            for (String key : resultJson.keySet()) {
+                envs.put(prefix + "RESULT_" + key, map.stringValue(key));
+            }
+        }
         return envs;
     }
 
@@ -332,6 +363,7 @@ public class RemoteJobResultUtils {
         private String uid;
         private Integer triggerNumber;
         private Map<String, Object> result;
+        private Map<String, Object> resultJson;
 
         public String getRemoteServer() {
             return remoteServer;
@@ -379,6 +411,14 @@ public class RemoteJobResultUtils {
 
         public void setResult(Map<String, Object> result) {
             this.result = result;
+        }
+
+        public Map<String, Object> getResultJson() {
+            return resultJson;
+        }
+
+        public void setResultJson(Map<String, Object> resultJson) {
+            this.resultJson = resultJson;
         }
     }
 }
