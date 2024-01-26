@@ -5,7 +5,8 @@ package io.jenkins.plugins.remote.result.trigger.exceptions;
  *
  * @author HW
  */
-public class UnSuccessfulRequestStatusException extends Exception{
+public class UnSuccessfulRequestStatusException extends Exception {
+    private static final long serialVersionUID = 8420230702251100687L;
     private final int status;
     private final String url;
 

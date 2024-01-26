@@ -2,20 +2,20 @@ package io.jenkins.plugins.remote.result.trigger.exceptions;
 
 import java.io.IOException;
 
-public class CredentialsNotFoundException extends IOException
-{
+/**
+ * @author HW
+ */
+public class CredentialsNotFoundException extends IOException {
 
     private static final long serialVersionUID = -2489306184948013529L;
     private final String credentialsId;
 
-    public CredentialsNotFoundException(String credentialsId)
-    {
+    public CredentialsNotFoundException(String credentialsId) {
         this.credentialsId = credentialsId;
     }
 
     @Override
-    public String getMessage()
-    {
+    public String getMessage() {
         return "No Jenkins Credentials found with ID '" + credentialsId + "'";
     }
 
