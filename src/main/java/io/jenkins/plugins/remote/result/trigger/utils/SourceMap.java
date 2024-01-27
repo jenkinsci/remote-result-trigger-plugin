@@ -6,7 +6,6 @@ import org.springframework.core.convert.support.DefaultConversionService;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * SourceMap 工具
@@ -15,11 +14,11 @@ public class SourceMap {
     /**
      * 类型转换器
      */
-    private static ConversionService conversionService = new DefaultConversionService();
+    private static final ConversionService conversionService = new DefaultConversionService();
     /**
      * SourceMap
      */
-    private Map<String, Object> source;
+    private final Map<String, Object> source;
 
     /**
      * 构造函数
@@ -33,7 +32,6 @@ public class SourceMap {
     /**
      * 静态获取方式
      *
-     * @param source
      * @return SourceMap工具
      */
     public static SourceMap of(Map<String, Object> source) {
@@ -45,7 +43,6 @@ public class SourceMap {
      *
      * @param key  字段名
      * @param type 类型
-     * @param <T>
      * @return 值
      */
     public <T> T value(String key, Class<T> type) {
@@ -160,7 +157,6 @@ public class SourceMap {
      *
      * @param key          字段名
      * @param elementClass List 对象类型
-     * @param <T>
      * @return 值
      */
     public <T> List<T> listValue(String key, Class<T> elementClass) {
@@ -192,8 +188,6 @@ public class SourceMap {
 
     /**
      * get source
-     *
-     * @return
      */
     public Map<String, Object> getSource() {
         return source;

@@ -1,6 +1,5 @@
 package io.jenkins.plugins.remote.result.trigger;
 
-import antlr.ANTLRException;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Action;
@@ -35,10 +34,10 @@ import java.util.UUID;
  */
 public class RemoteBuildResultTrigger extends AbstractTrigger implements Serializable {
     private static final long serialVersionUID = -4059001060991775146L;
-    private List<RemoteJobInfo> remoteJobInfos;
+    private final List<RemoteJobInfo> remoteJobInfos;
 
     @DataBoundConstructor
-    public RemoteBuildResultTrigger(String cronTabSpec, List<RemoteJobInfo> remoteJobInfos) throws ANTLRException {
+    public RemoteBuildResultTrigger(String cronTabSpec, List<RemoteJobInfo> remoteJobInfos) {
         super(cronTabSpec);
         // add id
         if (remoteJobInfos != null) {
@@ -53,7 +52,9 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
 
     @Override
     protected File getLogFile() {
-        if (job == null) return null;
+        if (job == null) {
+            return null;
+        }
         return new File(job.getRootDir(), "remote-build-result.log");
     }
 
@@ -169,7 +170,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
          * <p>
          * If you don't want fields to be persisted, use <tt>transient</tt>.
          */
-        private CopyOnWriteList<RemoteJenkinsServer> remoteJenkinsServers = new CopyOnWriteList<>();
+        private final CopyOnWriteList<RemoteJenkinsServer> remoteJenkinsServers = new CopyOnWriteList<>();
 
         /**
          * In order to load the persisted global configuration, you have to

@@ -1,5 +1,6 @@
 package io.jenkins.plugins.remote.result.trigger.auth2;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Item;
 import hudson.util.Secret;
@@ -12,6 +13,9 @@ import org.kohsuke.stapler.DataBoundSetter;
 
 import java.nio.charset.StandardCharsets;
 
+/**
+ * @author HW
+ */
 public class TokenAuth extends Auth2 {
 
     private static final long serialVersionUID = 7912089565969112023L;
@@ -48,9 +52,6 @@ public class TokenAuth extends Auth2 {
 
     /**
      * Get JenkinsClient Credentials Or ApiToken
-     *
-     * @param item
-     * @return
      */
     @Override
     public String getCredentials(Item item) throws CredentialsNotFoundException {
@@ -79,6 +80,7 @@ public class TokenAuth extends Auth2 {
 
     @Symbol("TokenAuth")
     public static class TokenAuthDescriptor extends Auth2Descriptor {
+        @NonNull
         @Override
         public String getDisplayName() {
             return "Token Authentication";
@@ -96,22 +98,25 @@ public class TokenAuth extends Auth2 {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (!this.getClass().isInstance(obj))
+        }
+        if (!this.getClass().isInstance(obj)) {
             return false;
+        }
         TokenAuth other = (TokenAuth) obj;
         if (apiToken == null) {
-            if (other.apiToken != null)
+            if (other.apiToken != null) {
                 return false;
+            }
         } else if (!apiToken.equals(other.apiToken)) {
             return false;
         }
         if (userName == null) {
-            if (other.userName != null)
-                return false;
+            return other.userName == null;
         } else if (!userName.equals(other.userName)) {
             return false;
         }

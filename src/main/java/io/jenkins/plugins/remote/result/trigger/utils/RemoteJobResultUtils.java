@@ -50,7 +50,7 @@ public class RemoteJobResultUtils {
      *
      * @param job     Jenkins job
      * @param jobInfo remote Job info
-     * @param number  build nubmer
+     * @param number  build number
      * @return api result
      */
     public static SourceMap requestBuildResult(Item job, RemoteJobInfo jobInfo, int number)

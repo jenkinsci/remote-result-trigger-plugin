@@ -1,11 +1,15 @@
 package io.jenkins.plugins.remote.result.trigger.auth2;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.jenkins.plugins.remote.result.trigger.exceptions.CredentialsNotFoundException;
 import hudson.Extension;
 import hudson.model.Item;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
+/**
+ * @author HW
+ */
 public class NoneAuth extends Auth2 {
 
     private static final long serialVersionUID = -3128995428538415113L;
@@ -22,9 +26,6 @@ public class NoneAuth extends Auth2 {
 
     /**
      * Get JenkinsClient Credentials Or ApiToken
-     *
-     * @param item
-     * @return
      */
     @Override
     public String getCredentials(Item item) throws CredentialsNotFoundException {
@@ -48,6 +49,7 @@ public class NoneAuth extends Auth2 {
 
     @Symbol("NoneAuth")
     public static class NoneAuthDescriptor extends Auth2Descriptor {
+        @NonNull
         @Override
         public String getDisplayName() {
             return "No Authentication";
