@@ -11,6 +11,7 @@ import org.kohsuke.stapler.WebMethod;
 import org.kohsuke.stapler.json.JsonHttpResponse;
 import org.kohsuke.stapler.verb.GET;
 
+import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -74,8 +75,8 @@ public class RemoteResultJsonApi implements RootAction {
                     String jsonStr = jsonFile.readToString();
                     return new JsonHttpResponse(JSONObject.fromObject(jsonStr), 200);
                 }
-            } catch (Exception e) {
-                // nothing to do
+            } catch (IOException | InterruptedException e) {
+                // nothing to do here
             }
         }
         return new JsonHttpResponse(JSONObject.fromObject("{}"), 200);
