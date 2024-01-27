@@ -37,7 +37,6 @@ Name**
 | REMOTE_${uid}\_PARAMETER_${PARAMETER_NAME} | If remote job use buildWithParameters, use remote parameters replace ${PARAMETER_NAME}.                                                           |
 | REMOTE_${uid}\_RESULT_${PUB_RESULT_KEY}    | If remote use pubResult, use result json key replace ${PUB_RESULT_KEY}                                                                            |
 
-
 ## Configuration
 
 ### Add Remote Server
@@ -52,8 +51,12 @@ Job > Build Triggers > Checked Remote Build Result Trigger
 
 ## Publish
 
-### with pipeline
+### Publish with pipeline
 
 ```groovy
 pubResult(result: '{"key": "value"}')
 ```
+
+### Publish with FreestyleProject
+
+![](screenshots/20240127083709.png)
