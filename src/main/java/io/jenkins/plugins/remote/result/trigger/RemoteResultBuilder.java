@@ -1,7 +1,10 @@
 package io.jenkins.plugins.remote.result.trigger;
 
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -13,7 +16,6 @@ import hudson.tasks.Builder;
 import io.jenkins.plugins.remote.result.trigger.exceptions.JsonNotMatchException;
 import jenkins.tasks.SimpleBuildStep;
 import org.jenkinsci.Symbol;
-import org.jetbrains.annotations.NotNull;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
@@ -43,8 +45,25 @@ public class RemoteResultBuilder extends Builder implements SimpleBuildStep, Ser
         return result;
     }
 
+    /**
+     * Run this step.
+     * <p>
+     * This method <strong>must</strong> be overridden when this step requires a workspace context. If such a context is
+     * <em>not</em> required, it does not need to be overridden; it will then forward to
+     * {@link #perform(Run, EnvVars, TaskListener)}.
+     *
+     * @param run       a build this is running as a part of
+     * @param workspace a workspace to use for any file operations
+     * @param env       environment variables applicable to this step
+     * @param launcher  a way to start processes
+     * @param listener  a place to send output
+     * @throws AbstractMethodError  if this step requires a workspace context and neither this method nor {@link #perform(Run, FilePath, Launcher, TaskListener)} is overridden
+     * @throws InterruptedException if the step is interrupted
+     * @throws IOException          if something goes wrong; use {@link hudson.AbortException} for a polite error
+     * @since 2.241
+     */
     @Override
-    public void perform(@NotNull Run<?, ?> run, @NotNull FilePath workspace, @NotNull Launcher launcher, @NotNull TaskListener listener) throws InterruptedException, IOException {
+    public void perform(@NonNull Run<?, ?> run, @NonNull FilePath workspace, @NonNull EnvVars env, @NonNull Launcher launcher, @NonNull TaskListener listener) throws InterruptedException, IOException {
         if (result != null && result.startsWith("{") && result.endsWith("}")) {
             try {
                 ObjectMapper mapper = new ObjectMapper();
@@ -71,7 +90,7 @@ public class RemoteResultBuilder extends Builder implements SimpleBuildStep, Ser
          * Historically some implementations returned null as a way of hiding the descriptor from the UI,
          * but this is generally managed by an explicit method such as {@code isEnabled} or {@code isApplicable}.
          */
-        @NotNull
+        @NonNull
         @Override
         public String getDisplayName() {
             return "Publish Build Result";

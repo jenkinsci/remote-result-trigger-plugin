@@ -23,6 +23,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * @author HW
+ */
 public class CredentialsAuth extends Auth2 {
 
     private static final long serialVersionUID = -2650007108928532552L;
@@ -186,17 +189,18 @@ public class CredentialsAuth extends Auth2 {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (!this.getClass().isInstance(obj))
+        }
+        if (!this.getClass().isInstance(obj)) {
             return false;
+        }
         CredentialsAuth other = (CredentialsAuth) obj;
         if (credentialsId == null) {
-            if (other.credentialsId != null) {
-                return false;
-            }
+            return other.credentialsId == null;
         } else if (!credentialsId.equals(other.credentialsId)) {
             return false;
         }

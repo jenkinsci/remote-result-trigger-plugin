@@ -18,8 +18,8 @@ import java.nio.charset.Charset;
  * @author HW
  */
 public class RemoteBuildResultLogAction implements Action {
-    private BuildableItem job;
-    private File logFile;
+    private final BuildableItem job;
+    private final File logFile;
 
     public RemoteBuildResultLogAction(BuildableItem job, File logFile) {
         this.job = job;

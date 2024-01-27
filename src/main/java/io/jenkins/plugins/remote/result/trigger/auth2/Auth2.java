@@ -31,6 +31,7 @@ public abstract class Auth2 extends AbstractDescribableImpl<Auth2> implements Se
      */
     public abstract String getCredentials(Item item) throws CredentialsNotFoundException;
 
+    @Override
     public abstract String toString();
 
     /**
