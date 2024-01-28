@@ -9,6 +9,9 @@ import jenkins.model.Jenkins;
 
 import java.io.Serializable;
 
+/**
+ * @author HW
+ */
 public abstract class Auth2 extends AbstractDescribableImpl<Auth2> implements Serializable, Cloneable {
 
     private static final long serialVersionUID = -3217381962636283564L;
@@ -25,9 +28,6 @@ public abstract class Auth2 extends AbstractDescribableImpl<Auth2> implements Se
 
     /**
      * Get JenkinsClient Credentials Or ApiToken
-     *
-     * @param item
-     * @return
      */
     public abstract String getCredentials(Item item) throws CredentialsNotFoundException;
 
