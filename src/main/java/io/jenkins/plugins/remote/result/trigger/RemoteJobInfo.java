@@ -5,6 +5,7 @@ import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import io.jenkins.plugins.remote.result.trigger.model.ResultCheck;
 import io.jenkins.plugins.remote.result.trigger.utils.RemoteJenkinsServerUtils;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
@@ -36,6 +37,7 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
     private String remoteJobName;
     private String uid;
     private List<String> triggerResults = new ArrayList<>();
+    private List<ResultCheck> resultChecks = new ArrayList<>();
 
     @DataBoundConstructor
     public RemoteJobInfo() {
@@ -93,6 +95,15 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
 
     public List<String> getTriggerResults() {
         return triggerResults;
+    }
+
+    public List<ResultCheck> getResultChecks() {
+        return resultChecks;
+    }
+
+    @DataBoundSetter
+    public void setResultChecks(List<ResultCheck> resultChecks) {
+        this.resultChecks = resultChecks;
     }
 
     /**

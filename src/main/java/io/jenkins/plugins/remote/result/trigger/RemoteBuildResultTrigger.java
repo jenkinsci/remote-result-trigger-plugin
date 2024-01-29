@@ -92,15 +92,6 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
 
                                 log.info("Last build url: " + buildUrl);
                                 log.info("Last build number: " + buildNumber);
-                                // remote json
-                                if (StringUtils.isNotEmpty(buildUrl)) {
-                                    try {
-                                        SourceMap resultJson = RemoteJobResultUtils.requestBuildResultJson(job, jobInfo, buildUrl);
-                                        RemoteJobResultUtils.saveBuildResultJson(job, jobInfo, resultJson);
-                                    } catch (Exception e) {
-                                        // do nothing
-                                    }
-                                }
 
                                 // check need trigger
                                 if (jobInfo.getTriggerResults().contains(result.stringValue("result"))) {
@@ -109,6 +100,15 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                     // cache
                                     RemoteJobResultUtils.saveBuildInfo(job, jobInfo, result);
                                     changed = true;
+                                    // remote json
+                                    if (StringUtils.isNotEmpty(buildUrl)) {
+                                        try {
+                                            SourceMap resultJson = RemoteJobResultUtils.requestBuildResultJson(job, jobInfo, buildUrl);
+                                            RemoteJobResultUtils.saveBuildResultJson(job, jobInfo, resultJson);
+                                        } catch (Exception e) {
+                                            // do nothing
+                                        }
+                                    }
                                     // saved trigger number
                                     RemoteJobResultUtils.saveTriggerNumber(job, jobInfo, buildNumber);
                                     break;

@@ -1,0 +1,27 @@
+<div>
+    <p>
+        Only trigger the build if remote publish result json passes all the checks specified.
+    </p>
+    <p>Each check consists of <b>key</b> / <b>expected value</b> pair.
+        To pass the check, the value extracted from publish result
+        must match the regular expression specified by the "expected value".
+    </p>
+
+    <p>Consider a result body of:</p>
+
+    <pre>
+pubResult(result: """{
+            "version": "1.0.0",
+            "isSnapshot": "true"
+        }""")
+    </pre>
+
+    <p>To check if <b>isSnapshot</b> is <b>true</b>, you would specify the key and expected value as:</p>
+
+    <dl>
+        <dt>Key</dt>
+        <dd><code>isSnapshot</code></dd>
+        <dt>Expected Value</dt>
+        <dd><code>true</code></dd>
+    </dl>
+</div>
