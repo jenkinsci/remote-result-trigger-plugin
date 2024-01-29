@@ -104,11 +104,11 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                             List<ResultCheck> resultChecks = jobInfo.getResultChecks();
                                             for (ResultCheck check : resultChecks) {
                                                 if (StringUtils.isNotEmpty(check.getKey())
-                                                        && StringUtils.isNotEmpty(check.getExpectedValue())){
-                                                    if (resultJson.containsKey(check.getKey())){
+                                                        && StringUtils.isNotEmpty(check.getExpectedValue())) {
+                                                    if (resultJson.containsKey(check.getKey())) {
                                                         String value = resultJson.stringValue(check.getKey());
                                                         Pattern pattern = Pattern.compile(check.getExpectedValue());
-                                                        if (!pattern.matcher(value).matches()){
+                                                        if (!pattern.matcher(value).matches()) {
                                                             // 发现错误，跳出检查
                                                             resultCheck = false;
                                                             break;
@@ -118,7 +118,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                                     }
                                                 }
                                             }
-                                        } catch (Exception e) {
+                                        } catch (UnSuccessfulRequestStatusException | IOException e) {
                                             // do nothing
                                         }
                                     }
@@ -135,7 +135,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                 }
 
                                 // build completed
-                                if (!result.booleanValue("building")){
+                                if (!result.booleanValue("building")) {
                                     // saved trigger number
                                     RemoteJobResultUtils.saveTriggerNumber(job, jobInfo, buildNumber);
                                 }
