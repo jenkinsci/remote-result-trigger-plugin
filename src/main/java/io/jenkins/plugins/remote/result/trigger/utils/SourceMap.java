@@ -9,6 +9,7 @@ import java.util.Map;
 
 /**
  * SourceMap 工具
+ *
  * @author HW
  */
 public class SourceMap {
@@ -192,5 +193,9 @@ public class SourceMap {
      */
     public Map<String, Object> getSource() {
         return source;
+    }
+
+    public boolean containsKey(String key) {
+        return source.containsKey(key);
     }
 }
