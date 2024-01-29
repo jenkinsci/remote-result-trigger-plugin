@@ -6,6 +6,7 @@ import hudson.model.Action;
 import hudson.model.Node;
 import hudson.util.CopyOnWriteList;
 import io.jenkins.plugins.remote.result.trigger.exceptions.UnSuccessfulRequestStatusException;
+import io.jenkins.plugins.remote.result.trigger.model.ResultCheck;
 import io.jenkins.plugins.remote.result.trigger.utils.RemoteJobResultUtils;
 import io.jenkins.plugins.remote.result.trigger.utils.SourceMap;
 import jenkins.model.Jenkins;
@@ -22,10 +23,8 @@ import org.kohsuke.stapler.StaplerRequest;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * Remote Build Result Trigger
@@ -92,26 +91,53 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
 
                                 log.info("Last build url: " + buildUrl);
                                 log.info("Last build number: " + buildNumber);
-                                // remote json
-                                if (StringUtils.isNotEmpty(buildUrl)) {
-                                    try {
-                                        SourceMap resultJson = RemoteJobResultUtils.requestBuildResultJson(job, jobInfo, buildUrl);
-                                        RemoteJobResultUtils.saveBuildResultJson(job, jobInfo, resultJson);
-                                    } catch (Exception e) {
-                                        // do nothing
-                                    }
-                                }
 
                                 // check need trigger
                                 if (jobInfo.getTriggerResults().contains(result.stringValue("result"))) {
-                                    // changed
-                                    log.info("Need trigger, remote build result: " + result.stringValue("result"));
-                                    // cache
-                                    RemoteJobResultUtils.saveBuildInfo(job, jobInfo, result);
-                                    changed = true;
+                                    boolean resultCheck = true;
+                                    // remote json
+                                    SourceMap resultJson = SourceMap.of(new HashMap<>());
+                                    if (StringUtils.isNotEmpty(buildUrl)) {
+                                        try {
+                                            resultJson = RemoteJobResultUtils.requestBuildResultJson(job, jobInfo, buildUrl);
+                                            // check result
+                                            List<ResultCheck> resultChecks = jobInfo.getResultChecks();
+                                            for (ResultCheck check : resultChecks) {
+                                                if (StringUtils.isNotEmpty(check.getKey())
+                                                        && StringUtils.isNotEmpty(check.getExpectedValue())) {
+                                                    if (resultJson.containsKey(check.getKey())) {
+                                                        String value = resultJson.stringValue(check.getKey());
+                                                        Pattern pattern = Pattern.compile(check.getExpectedValue());
+                                                        if (!pattern.matcher(value).matches()) {
+                                                            // 发现错误，跳出检查
+                                                            resultCheck = false;
+                                                            break;
+                                                        }
+                                                    } else {
+                                                        resultCheck = false;
+                                                    }
+                                                }
+                                            }
+                                        } catch (UnSuccessfulRequestStatusException | IOException e) {
+                                            // do nothing
+                                        }
+                                    }
+
+                                    if (resultCheck) {
+                                        // changed
+                                        log.info("Need trigger, remote build result: " + result.stringValue("result"));
+                                        // result
+                                        RemoteJobResultUtils.saveBuildInfo(job, jobInfo, result);
+                                        RemoteJobResultUtils.saveBuildResultJson(job, jobInfo, resultJson);
+                                        changed = true;
+                                        break;
+                                    }
+                                }
+
+                                // build completed
+                                if (!result.booleanValue("building")) {
                                     // saved trigger number
                                     RemoteJobResultUtils.saveTriggerNumber(job, jobInfo, buildNumber);
-                                    break;
                                 }
                             } else {
                                 // remote server has been deleted

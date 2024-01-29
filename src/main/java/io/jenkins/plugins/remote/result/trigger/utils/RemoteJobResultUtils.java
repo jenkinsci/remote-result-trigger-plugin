@@ -98,7 +98,7 @@ public class RemoteJobResultUtils {
 
         savedJobInfo.setTriggerNumber(number);
 
-        saveBuildInfo(job, savedJobInfo);
+        saveBuildInfo(job, jobInfo, savedJobInfo);
     }
 
     /**
@@ -114,13 +114,9 @@ public class RemoteJobResultUtils {
             savedJobInfo = new SavedJobInfo();
         }
 
-        savedJobInfo.setRemoteServer(jobInfo.getRemoteServer());
-        savedJobInfo.setRemoteJob(jobInfo.getId());
-        savedJobInfo.setRemoteJobName(jobInfo.getRemoteJobName());
-        savedJobInfo.setUid(jobInfo.getUid());
         savedJobInfo.setResultJson(resultJson.getSource());
 
-        saveBuildInfo(job, savedJobInfo);
+        saveBuildInfo(job, jobInfo, savedJobInfo);
     }
 
     /**
@@ -136,22 +132,25 @@ public class RemoteJobResultUtils {
             savedJobInfo = new SavedJobInfo();
         }
 
-        savedJobInfo.setRemoteServer(jobInfo.getRemoteServer());
-        savedJobInfo.setRemoteJob(jobInfo.getId());
-        savedJobInfo.setRemoteJobName(jobInfo.getRemoteJobName());
-        savedJobInfo.setUid(jobInfo.getUid());
         savedJobInfo.setResult(remoteResult.getSource());
 
-        saveBuildInfo(job, savedJobInfo);
+        saveBuildInfo(job, jobInfo, savedJobInfo);
     }
 
     /**
      * save build info to file
      *
      * @param job          Jenkins job
+     * @param jobInfo      remote Job info
      * @param savedJobInfo save info
      */
-    private static void saveBuildInfo(BuildableItem job, SavedJobInfo savedJobInfo) throws IOException {
+    private static void saveBuildInfo(BuildableItem job, RemoteJobInfo jobInfo, SavedJobInfo savedJobInfo) throws IOException {
+        // remote job info
+        savedJobInfo.setRemoteServer(jobInfo.getRemoteServer());
+        savedJobInfo.setRemoteJob(jobInfo.getId());
+        savedJobInfo.setRemoteJobName(jobInfo.getRemoteJobName());
+        savedJobInfo.setUid(jobInfo.getUid());
+
         // get saved list
         List<SavedJobInfo> savedJobInfos = getSavedJobInfos(job);
         // remove old
