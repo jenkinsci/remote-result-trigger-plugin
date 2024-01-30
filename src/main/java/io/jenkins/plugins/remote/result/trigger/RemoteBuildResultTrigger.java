@@ -74,7 +74,6 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
 
     @Override
     protected boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException {
-        boolean changed = false;
         if (CollectionUtils.isNotEmpty(remoteJobInfos)) {
             try {
                 for (RemoteJobInfo jobInfo : remoteJobInfos) {
@@ -92,6 +91,12 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                 log.info("Last build url: " + buildUrl);
                                 log.info("Last build number: " + buildNumber);
 
+                                // build completed
+                                if (!result.booleanValue("building")) {
+                                    // saved trigger number
+                                    RemoteJobResultUtils.saveTriggerNumber(job, jobInfo, buildNumber);
+                                }
+
                                 // check need trigger
                                 if (jobInfo.getTriggerResults().contains(result.stringValue("result"))) {
                                     boolean resultCheck = true;
@@ -102,19 +107,21 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                             resultJson = RemoteJobResultUtils.requestBuildResultJson(job, jobInfo, buildUrl);
                                             // check result
                                             List<ResultCheck> resultChecks = jobInfo.getResultChecks();
-                                            for (ResultCheck check : resultChecks) {
-                                                if (StringUtils.isNotEmpty(check.getKey())
-                                                        && StringUtils.isNotEmpty(check.getExpectedValue())) {
-                                                    if (resultJson.containsKey(check.getKey())) {
-                                                        String value = resultJson.stringValue(check.getKey());
-                                                        Pattern pattern = Pattern.compile(check.getExpectedValue());
-                                                        if (!pattern.matcher(value).matches()) {
-                                                            // 发现错误，跳出检查
+                                            if (resultChecks != null) {
+                                                for (ResultCheck check : resultChecks) {
+                                                    if (StringUtils.isNotEmpty(check.getKey())
+                                                            && StringUtils.isNotEmpty(check.getExpectedValue())) {
+                                                        if (resultJson.containsKey(check.getKey())) {
+                                                            String value = resultJson.stringValue(check.getKey());
+                                                            Pattern pattern = Pattern.compile(check.getExpectedValue());
+                                                            if (!pattern.matcher(value).matches()) {
+                                                                // 发现错误，跳出检查
+                                                                resultCheck = false;
+                                                                break;
+                                                            }
+                                                        } else {
                                                             resultCheck = false;
-                                                            break;
                                                         }
-                                                    } else {
-                                                        resultCheck = false;
                                                     }
                                                 }
                                             }
@@ -129,15 +136,8 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                         // result
                                         RemoteJobResultUtils.saveBuildInfo(job, jobInfo, result);
                                         RemoteJobResultUtils.saveBuildResultJson(job, jobInfo, resultJson);
-                                        changed = true;
-                                        break;
+                                        return true;
                                     }
-                                }
-
-                                // build completed
-                                if (!result.booleanValue("building")) {
-                                    // saved trigger number
-                                    RemoteJobResultUtils.saveTriggerNumber(job, jobInfo, buildNumber);
                                 }
                             } else {
                                 // remote server has been deleted
@@ -157,7 +157,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
         } else {
             log.error("No remote job configured!");
         }
-        return changed;
+        return false;
     }
 
     /**
