@@ -234,7 +234,8 @@ public class RemoteJobResultUtils {
         String url = new StringBuilder(remoteServer.getUrl())
                 .append(remoteServer.getUrl().endsWith("/") ? "" : "/")
                 .append(apiUrl)
-                .toString();
+                .toString()
+                .replace("//", "/");
         Request request = requestBuilder.url(url).get().build();
 
         Call call = okHttpClient.newCall(request);

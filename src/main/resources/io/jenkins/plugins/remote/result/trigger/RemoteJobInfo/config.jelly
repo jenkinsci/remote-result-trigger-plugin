@@ -11,7 +11,8 @@
         <f:select field="remoteServer"/>
     </f:entry>
 
-    <f:entry title="Remote Job Name" field="remoteJobName">
+    <f:entry title="Remote Job Name" field="remoteJobName"
+             help="/descriptor/io.jenkins.plugins.remote.result.trigger.RemoteJobInfo/help/remoteJobName">
         <f:textbox/>
     </f:entry>
 
