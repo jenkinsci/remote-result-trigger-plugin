@@ -140,6 +140,28 @@ public class RemoteJobResultUtils {
     }
 
     /**
+     * clean
+     *
+     * @param job            Jenkins job
+     * @param remoteJobInfos remote Job infos
+     */
+    public static void cleanUnusedBuildInfo(BuildableItem job, List<RemoteJobInfo> remoteJobInfos) throws IOException {
+        List<SavedJobInfo> savedJobInfos = getSavedJobInfos(job);
+        savedJobInfos.removeIf(savedJobInfo ->
+                remoteJobInfos.stream().noneMatch(
+                        remoteJobInfo -> remoteJobInfo.getId().equals(savedJobInfo.getRemoteJob())
+                )
+        );
+        // save to file
+        File file = getRemoteResultConfigFile(job);
+        if (!file.getParentFile().exists()) {
+            FileUtils.forceMkdirParent(file);
+        }
+        String string = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(savedJobInfos);
+        FileUtils.writeStringToFile(file, string, StandardCharsets.UTF_8);
+    }
+
+    /**
      * save build info to file
      *
      * @param job          Jenkins job
@@ -353,7 +375,7 @@ public class RemoteJobResultUtils {
         return envs;
     }
 
-    private static String jobApiPath(String jobApi){
+    private static String jobApiPath(String jobApi) {
         return jobApi.replace("//", "/").replaceFirst("^job/job/", "job/");
     }
 
