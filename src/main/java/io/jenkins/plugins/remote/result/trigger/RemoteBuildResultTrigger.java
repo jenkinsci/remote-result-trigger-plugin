@@ -41,9 +41,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
         // add id
         if (remoteJobInfos != null) {
             for (RemoteJobInfo jobInfo : remoteJobInfos) {
-                if (StringUtils.isEmpty(jobInfo.getId())) {
-                    jobInfo.setId(UUID.randomUUID().toString());
-                }
+                jobInfo.setId(UUID.randomUUID().toString());
             }
         }
         this.remoteJobInfos = remoteJobInfos;
@@ -76,6 +74,8 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
     protected boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException {
         if (CollectionUtils.isNotEmpty(remoteJobInfos)) {
             try {
+                // clean unused build result
+                RemoteJobResultUtils.cleanUnusedBuildInfo(job, remoteJobInfos);
                 for (RemoteJobInfo jobInfo : remoteJobInfos) {
                     // get next build number
                     Integer nextBuildNumber = RemoteJobResultUtils.requestNextBuildNumber(job, jobInfo);

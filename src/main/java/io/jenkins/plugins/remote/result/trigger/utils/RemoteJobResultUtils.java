@@ -38,7 +38,8 @@ public class RemoteJobResultUtils {
      */
     public static Integer requestNextBuildNumber(Item job, RemoteJobInfo jobInfo)
             throws UnSuccessfulRequestStatusException, IOException {
-        SourceMap result = requestRemoteApi(job, jobInfo, "job/" + jobInfo.getRemoteJobName() + "/api/json");
+        String api = "job/" + jobInfo.getRemoteJobName() + "/api/json";
+        SourceMap result = requestRemoteApi(job, jobInfo, jobApiPath(api));
         if (result != null) {
             return result.integerValue("nextBuildNumber");
         }
@@ -55,7 +56,8 @@ public class RemoteJobResultUtils {
      */
     public static SourceMap requestBuildResult(Item job, RemoteJobInfo jobInfo, int number)
             throws UnSuccessfulRequestStatusException, IOException {
-        return requestRemoteApi(job, jobInfo, "job/" + jobInfo.getRemoteJobName() + "/" + number + "/api/json");
+        String api = "job/" + jobInfo.getRemoteJobName() + "/" + number + "/api/json";
+        return requestRemoteApi(job, jobInfo, jobApiPath(api));
     }
 
     /**
@@ -135,6 +137,30 @@ public class RemoteJobResultUtils {
         savedJobInfo.setResult(remoteResult.getSource());
 
         saveBuildInfo(job, jobInfo, savedJobInfo);
+    }
+
+    /**
+     * clean
+     *
+     * @param job            Jenkins job
+     * @param remoteJobInfos remote Job infos
+     */
+    public static void cleanUnusedBuildInfo(BuildableItem job, List<RemoteJobInfo> remoteJobInfos) throws IOException {
+        if (remoteJobInfos != null) {
+            List<SavedJobInfo> savedJobInfos = getSavedJobInfos(job);
+            savedJobInfos.removeIf(savedJobInfo ->
+                    remoteJobInfos.stream().noneMatch(
+                            remoteJobInfo -> remoteJobInfo.getId().equals(savedJobInfo.getRemoteJob())
+                    )
+            );
+            // save to file
+            File file = getRemoteResultConfigFile(job);
+            if (!file.getParentFile().exists()) {
+                FileUtils.forceMkdirParent(file);
+            }
+            String string = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(savedJobInfos);
+            FileUtils.writeStringToFile(file, string, StandardCharsets.UTF_8);
+        }
     }
 
     /**
@@ -234,8 +260,7 @@ public class RemoteJobResultUtils {
         String url = new StringBuilder(remoteServer.getUrl())
                 .append(remoteServer.getUrl().endsWith("/") ? "" : "/")
                 .append(apiUrl)
-                .toString()
-                .replace("//", "/");
+                .toString();
         Request request = requestBuilder.url(url).get().build();
 
         Call call = okHttpClient.newCall(request);
@@ -352,6 +377,9 @@ public class RemoteJobResultUtils {
         return envs;
     }
 
+    private static String jobApiPath(String jobApi) {
+        return jobApi.replace("//", "/").replaceFirst("^job/job/", "job/");
+    }
 
     /**
      * Info
