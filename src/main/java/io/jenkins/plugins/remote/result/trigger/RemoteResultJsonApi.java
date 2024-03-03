@@ -1,11 +1,9 @@
 package io.jenkins.plugins.remote.result.trigger;
 
 import hudson.Extension;
-import hudson.FilePath;
 import hudson.model.RootAction;
-import jenkins.model.Jenkins;
+import io.jenkins.plugins.remote.result.trigger.utils.RemoteJobJsonResultUtils;
 import net.sf.json.JSONObject;
-import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.WebMethod;
 import org.kohsuke.stapler.json.JsonHttpResponse;
@@ -47,33 +45,14 @@ public class RemoteResultJsonApi implements RootAction {
     @GET
     @WebMethod(name = "result.json")
     public JsonHttpResponse getResult(@QueryParameter String buildUrl) {
-        // 提取路径
-        Pattern pattern = Pattern.compile("(/job/.*?/)+\\d+/$");
-        Matcher matcher = pattern.matcher(buildUrl);
-
+        // 提取路径和构建编号
+        Matcher matcher = Pattern.compile("((/job/(\\S+)/)+\\d+/)$").matcher(buildUrl);
         // 构建返回结果
         if (matcher.find()) {
-            FilePath root = new FilePath(Jenkins.get().getRootDir());
-            // 路径处理
-            String[] split = StringUtils.split(matcher.group(), "/");
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < split.length; i++) {
-                String str = split[i];
-                if (i % 2 == 0 && "job".equals(str)) {
-                    sb.append("jobs/");
-                } else if (i == split.length - 1) {
-                    sb.append("builds/").append(str);
-                } else {
-                    sb.append(str).append("/");
-                }
-            }
-            sb.append("/remote-result-trigger.json");
-
-            FilePath jsonFile = root.child(sb.toString());
             try {
-                if (jsonFile.exists()) {
-                    String jsonStr = jsonFile.readToString();
-                    return new JsonHttpResponse(JSONObject.fromObject(jsonStr), 200);
+                String json = RemoteJobJsonResultUtils.getJson(matcher.group());
+                if (json != null) {
+                    return new JsonHttpResponse(JSONObject.fromObject(json), 200);
                 }
             } catch (IOException | InterruptedException e) {
                 // nothing to do here

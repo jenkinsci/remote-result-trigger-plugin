@@ -14,6 +14,7 @@ import hudson.model.TaskListener;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import io.jenkins.plugins.remote.result.trigger.exceptions.JsonNotMatchException;
+import io.jenkins.plugins.remote.result.trigger.utils.RemoteJobJsonResultUtils;
 import jenkins.tasks.SimpleBuildStep;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -21,8 +22,9 @@ import org.kohsuke.stapler.DataBoundSetter;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author heweisc@dingtalk.com
@@ -74,7 +76,15 @@ public class RemoteResultBuilder extends Builder implements SimpleBuildStep, Ser
             }
             // envs
             String expand = run.getEnvironment(listener).expand(result);
-            new FilePath(run.getRootDir()).child("remote-result-trigger.json").write(expand, StandardCharsets.UTF_8.name());
+            // job dir
+            String url = run.getParent().getAbsoluteUrl();
+
+            Matcher matcher = Pattern.compile("((/job/(\\S+)/)+$)").matcher(url);
+            if (matcher.find()) {
+                String group = matcher.group();
+                RemoteJobJsonResultUtils.saveJson(group, run.getNumber(), expand);
+            }
+            // nothing to do
         } else {
             throw new JsonNotMatchException("Not Json Map Str:" + result);
         }
