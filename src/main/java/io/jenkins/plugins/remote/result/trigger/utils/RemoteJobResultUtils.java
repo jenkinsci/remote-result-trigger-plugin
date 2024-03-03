@@ -146,19 +146,21 @@ public class RemoteJobResultUtils {
      * @param remoteJobInfos remote Job infos
      */
     public static void cleanUnusedBuildInfo(BuildableItem job, List<RemoteJobInfo> remoteJobInfos) throws IOException {
-        List<SavedJobInfo> savedJobInfos = getSavedJobInfos(job);
-        savedJobInfos.removeIf(savedJobInfo ->
-                remoteJobInfos.stream().noneMatch(
-                        remoteJobInfo -> remoteJobInfo.getId().equals(savedJobInfo.getRemoteJob())
-                )
-        );
-        // save to file
-        File file = getRemoteResultConfigFile(job);
-        if (!file.getParentFile().exists()) {
-            FileUtils.forceMkdirParent(file);
+        if (remoteJobInfos != null) {
+            List<SavedJobInfo> savedJobInfos = getSavedJobInfos(job);
+            savedJobInfos.removeIf(savedJobInfo ->
+                    remoteJobInfos.stream().noneMatch(
+                            remoteJobInfo -> remoteJobInfo.getId().equals(savedJobInfo.getRemoteJob())
+                    )
+            );
+            // save to file
+            File file = getRemoteResultConfigFile(job);
+            if (!file.getParentFile().exists()) {
+                FileUtils.forceMkdirParent(file);
+            }
+            String string = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(savedJobInfos);
+            FileUtils.writeStringToFile(file, string, StandardCharsets.UTF_8);
         }
-        String string = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(savedJobInfos);
-        FileUtils.writeStringToFile(file, string, StandardCharsets.UTF_8);
     }
 
     /**
