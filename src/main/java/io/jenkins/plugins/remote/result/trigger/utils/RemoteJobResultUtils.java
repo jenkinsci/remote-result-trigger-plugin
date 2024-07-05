@@ -332,46 +332,48 @@ public class RemoteJobResultUtils {
      */
     private static Map<String, String> generateEnvs(String prefix, SavedJobInfo savedJobInfo) {
         Map<String, String> envs = new HashMap<>();
-        SourceMap sourceMap = SourceMap.of(savedJobInfo.result);
-        // BUILD_NUMBER
-        envs.put(prefix + "BUILD_NUMBER", sourceMap.stringValue("number"));
-        // TIMESTAMP
-        envs.put(prefix + "BUILD_TIMESTAMP", sourceMap.stringValue("timestamp"));
-        // BUILD_URL
-        envs.put(prefix + "BUILD_URL", sourceMap.stringValue("url"));
-        // BUILD_RESULT
-        envs.put(prefix + "BUILD_RESULT", sourceMap.stringValue("result"));
+        if (savedJobInfo.result != null) {
+            SourceMap sourceMap = SourceMap.of(savedJobInfo.result);
+            // BUILD_NUMBER
+            envs.put(prefix + "BUILD_NUMBER", sourceMap.stringValue("number"));
+            // TIMESTAMP
+            envs.put(prefix + "BUILD_TIMESTAMP", sourceMap.stringValue("timestamp"));
+            // BUILD_URL
+            envs.put(prefix + "BUILD_URL", sourceMap.stringValue("url"));
+            // BUILD_RESULT
+            envs.put(prefix + "BUILD_RESULT", sourceMap.stringValue("result"));
 
-        // Parameters
-        List<Map> actions = sourceMap.listValue("actions", Map.class);
-        if (actions != null) {
-            for (Map action : actions) {
-                SourceMap actionMap = SourceMap.of(action);
-                if (actionMap.stringValue("_class") != null
-                        && "hudson.model.ParametersAction".equals(actionMap.stringValue("_class"))) {
-                    List<Map> parameters = actionMap.listValue("parameters", Map.class);
-                    if (parameters != null) {
-                        for (Map parameter : parameters) {
-                            SourceMap parameterMap = SourceMap.of(parameter);
-                            if (parameterMap.stringValue("name") != null) {
-                                String key = new StringBuilder(prefix)
-                                        .append("PARAMETER_")
-                                        .append(parameterMap.stringValue("name"))
-                                        .toString();
-                                envs.put(key, parameterMap.stringValue("value"));
+            // Parameters
+            List<Map> actions = sourceMap.listValue("actions", Map.class);
+            if (actions != null) {
+                for (Map action : actions) {
+                    SourceMap actionMap = SourceMap.of(action);
+                    if (actionMap.stringValue("_class") != null
+                            && "hudson.model.ParametersAction".equals(actionMap.stringValue("_class"))) {
+                        List<Map> parameters = actionMap.listValue("parameters", Map.class);
+                        if (parameters != null) {
+                            for (Map parameter : parameters) {
+                                SourceMap parameterMap = SourceMap.of(parameter);
+                                if (parameterMap.stringValue("name") != null) {
+                                    String key = new StringBuilder(prefix)
+                                            .append("PARAMETER_")
+                                            .append(parameterMap.stringValue("name"))
+                                            .toString();
+                                    envs.put(key, parameterMap.stringValue("value"));
+                                }
                             }
                         }
                     }
                 }
             }
-        }
 
-        // result json
-        Map<String, Object> resultJson = savedJobInfo.getResultJson();
-        if (resultJson != null) {
-            SourceMap map = SourceMap.of(resultJson);
-            for (String key : resultJson.keySet()) {
-                envs.put(prefix + "RESULT_" + key, map.stringValue(key));
+            // result json
+            Map<String, Object> resultJson = savedJobInfo.getResultJson();
+            if (resultJson != null) {
+                SourceMap map = SourceMap.of(resultJson);
+                for (String key : resultJson.keySet()) {
+                    envs.put(prefix + "RESULT_" + key, map.stringValue(key));
+                }
             }
         }
         return envs;
