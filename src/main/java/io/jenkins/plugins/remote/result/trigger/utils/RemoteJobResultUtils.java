@@ -10,6 +10,7 @@ import io.jenkins.plugins.remote.result.trigger.RemoteJenkinsServer;
 import io.jenkins.plugins.remote.result.trigger.RemoteJobInfo;
 import io.jenkins.plugins.remote.result.trigger.exceptions.UnSuccessfulRequestStatusException;
 import io.jenkins.plugins.remote.result.trigger.utils.ssl.SSLSocketManager;
+import net.sf.json.util.JSONUtils;
 import okhttp3.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
@@ -18,10 +19,9 @@ import javax.net.ssl.X509TrustManager;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Remote Result Result Cache
@@ -216,6 +216,11 @@ public class RemoteJobResultUtils {
                     .toString();
             envs.putAll(generateEnvs(prefix, savedJobInfo));
         }
+        // jobs list
+        List<String> jobs = savedJobInfos.stream()
+                .map(info -> StringUtils.isNotBlank(info.getUid()) ? info.getUid() : info.getRemoteJobName())
+                .collect(Collectors.toUnmodifiableList());
+        envs.put("REMOTE_JOBS", new ObjectMapper().writeValueAsString(jobs));
         return envs;
     }
 
