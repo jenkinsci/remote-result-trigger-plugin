@@ -75,12 +75,20 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
         if (CollectionUtils.isNotEmpty(remoteJobInfos)) {
             try {
                 // clean unused build result
-                RemoteJobResultUtils.cleanUnusedBuildInfo(job, remoteJobInfos);
+                List<RemoteJobResultUtils.SavedJobInfo> removedJobs = RemoteJobResultUtils.cleanUnusedBuildInfo(job, remoteJobInfos);
+                if (!removedJobs.isEmpty()) {
+                    for (RemoteJobResultUtils.SavedJobInfo removedJob : removedJobs) {
+                        log.info("Removing unused job: " + removedJob.getRemoteJobName());
+                    }
+                }
                 for (RemoteJobInfo jobInfo : remoteJobInfos) {
+                    log.info("================== Job " + jobInfo.getRemoteJobName() + " ==================");
                     // get next build number
                     Integer nextBuildNumber = RemoteJobResultUtils.requestNextBuildNumber(job, jobInfo);
+                    log.info("Next build number: " + nextBuildNumber);
                     if (nextBuildNumber != null) {
                         int triggerNumber = RemoteJobResultUtils.getTriggerNumber(job, jobInfo);
+                        log.info("Trigger number: " + triggerNumber);
                         // checked remote build
                         for (int number = nextBuildNumber - 1; number > triggerNumber; number--) {
                             SourceMap result = RemoteJobResultUtils.requestBuildResult(job, jobInfo, number);
@@ -99,6 +107,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
 
                                 // check need trigger
                                 if (jobInfo.getTriggerResults().contains(result.stringValue("result"))) {
+                                    log.info("Result confirmed: " + result.stringValue("result"));
                                     boolean resultCheck = true;
                                     // remote json
                                     SourceMap resultJson = SourceMap.of(new HashMap<>());

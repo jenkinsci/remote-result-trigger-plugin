@@ -14,6 +14,7 @@ import net.sf.json.util.JSONUtils;
 import okhttp3.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.lang.NonNull;
 
 import javax.net.ssl.X509TrustManager;
 import java.io.File;
@@ -21,6 +22,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -145,14 +147,20 @@ public class RemoteJobResultUtils {
      * @param job            Jenkins job
      * @param remoteJobInfos remote Job infos
      */
-    public static void cleanUnusedBuildInfo(BuildableItem job, List<RemoteJobInfo> remoteJobInfos) throws IOException {
+    @NonNull
+    public static List<SavedJobInfo> cleanUnusedBuildInfo(BuildableItem job, List<RemoteJobInfo> remoteJobInfos) throws IOException {
+        List<SavedJobInfo> removed = new ArrayList<>();
         if (remoteJobInfos != null) {
             List<SavedJobInfo> savedJobInfos = getSavedJobInfos(job);
-            savedJobInfos.removeIf(savedJobInfo ->
-                    remoteJobInfos.stream().noneMatch(
-                            remoteJobInfo -> remoteJobInfo.getId().equals(savedJobInfo.getRemoteJob())
-                    )
-            );
+            savedJobInfos.removeIf(savedJobInfo -> {
+                boolean match = remoteJobInfos.stream().noneMatch(
+                        remoteJobInfo -> remoteJobInfo.getId().equals(savedJobInfo.getRemoteJob())
+                );
+                if (match) {
+                    removed.add(savedJobInfo);
+                }
+                return match;
+            });
             // save to file
             File file = getRemoteResultConfigFile(job);
             if (!file.getParentFile().exists()) {
@@ -161,6 +169,7 @@ public class RemoteJobResultUtils {
             String string = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(savedJobInfos);
             FileUtils.writeStringToFile(file, string, StandardCharsets.UTF_8);
         }
+        return removed;
     }
 
     /**
