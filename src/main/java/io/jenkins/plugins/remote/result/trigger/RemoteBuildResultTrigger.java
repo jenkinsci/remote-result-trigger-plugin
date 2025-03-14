@@ -100,7 +100,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                 log.info("Last build number: " + buildNumber);
 
                                 // build completed
-                                if (!result.booleanValue("inProgress")) {
+                                if (!(result.booleanValue("building") || result.booleanValue("inProgress"))) {
                                     // saved trigger number
                                     RemoteJobResultUtils.saveTriggerNumber(job, jobInfo, buildNumber);
 
