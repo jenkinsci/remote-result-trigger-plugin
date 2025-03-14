@@ -101,8 +101,6 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
 
                                 // build completed
                                 if (!(result.booleanValue("building") || result.booleanValue("inProgress"))) {
-                                    // saved trigger number
-                                    RemoteJobResultUtils.saveTriggerNumber(job, jobInfo, buildNumber);
 
                                     // check need trigger
                                     if (jobInfo.getTriggerResults().contains(result.stringValue("result"))) {
@@ -142,6 +140,8 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                         if (resultCheck) {
                                             // changed
                                             log.info("Need trigger, remote build result: " + result.stringValue("result"));
+                                            // saved trigger number
+                                            RemoteJobResultUtils.saveTriggerNumber(job, jobInfo, buildNumber);
                                             // result
                                             RemoteJobResultUtils.saveBuildInfo(job, jobInfo, result);
                                             RemoteJobResultUtils.saveBuildResultJson(job, jobInfo, resultJson);
