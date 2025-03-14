@@ -85,12 +85,12 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                     log.info("================== Job " + jobInfo.getRemoteJobName() + " ==================");
                     // get next build number
                     Integer nextBuildNumber = RemoteJobResultUtils.requestNextBuildNumber(job, jobInfo);
-                    log.info("Next build number: " + nextBuildNumber);
                     if (nextBuildNumber != null) {
-                        int triggerNumber = RemoteJobResultUtils.getTriggerNumber(job, jobInfo);
-                        log.info("Trigger number: " + triggerNumber);
+                        log.info("Build number: " + (nextBuildNumber - 1));
+                        int checkedNumber = RemoteJobResultUtils.getCheckedNumber(job, jobInfo);
+                        log.info("Checked number: " + checkedNumber);
                         // checked remote build
-                        for (int number = nextBuildNumber - 1; number > triggerNumber; number--) {
+                        for (int number = nextBuildNumber - 1; number > checkedNumber; number--) {
                             SourceMap result = RemoteJobResultUtils.requestBuildResult(job, jobInfo, number);
                             if (result != null) {
                                 Integer buildNumber = result.integerValue("number");
@@ -137,11 +137,12 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                             }
                                         }
 
+                                        // saved checked number
+                                        RemoteJobResultUtils.saveCheckedNumber(job, jobInfo, buildNumber);
+
                                         if (resultCheck) {
                                             // changed
                                             log.info("Need trigger, remote build result: " + result.stringValue("result"));
-                                            // saved trigger number
-                                            RemoteJobResultUtils.saveTriggerNumber(job, jobInfo, buildNumber);
                                             // result
                                             RemoteJobResultUtils.saveBuildInfo(job, jobInfo, result);
                                             RemoteJobResultUtils.saveBuildResultJson(job, jobInfo, resultJson);

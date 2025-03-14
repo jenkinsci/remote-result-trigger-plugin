@@ -10,7 +10,6 @@ import io.jenkins.plugins.remote.result.trigger.RemoteJenkinsServer;
 import io.jenkins.plugins.remote.result.trigger.RemoteJobInfo;
 import io.jenkins.plugins.remote.result.trigger.exceptions.UnSuccessfulRequestStatusException;
 import io.jenkins.plugins.remote.result.trigger.utils.ssl.SSLSocketManager;
-import net.sf.json.util.JSONUtils;
 import okhttp3.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
@@ -20,9 +19,10 @@ import javax.net.ssl.X509TrustManager;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -76,31 +76,37 @@ public class RemoteJobResultUtils {
     }
 
     /**
-     * last trigger build number
+     * last checked build number
      *
      * @param job     Jenkins job
      * @param jobInfo remote Job info
      * @return last trigger number
      */
-    public static int getTriggerNumber(Item job, RemoteJobInfo jobInfo) throws IOException {
+    public static int getCheckedNumber(Item job, RemoteJobInfo jobInfo) throws IOException {
         SavedJobInfo savedJobInfo = getSavedJobInfo(job, jobInfo);
-        return savedJobInfo == null || savedJobInfo.getTriggerNumber() == null ? 0 : savedJobInfo.getTriggerNumber();
+        // 兼容老版本
+        if (savedJobInfo != null
+                && (savedJobInfo.getCheckedNumber() != null || savedJobInfo.getTriggerNumber() != null)) {
+            return savedJobInfo.getCheckedNumber() == null ?
+                    savedJobInfo.getTriggerNumber() : savedJobInfo.getCheckedNumber();
+        }
+        return 0;
     }
 
     /**
-     * save build trigger number
+     * save build checked number
      *
      * @param job     Jenkins job
      * @param jobInfo remote Job info
      * @param number  trigger number
      */
-    public static void saveTriggerNumber(BuildableItem job, RemoteJobInfo jobInfo, int number) throws IOException {
+    public static void saveCheckedNumber(BuildableItem job, RemoteJobInfo jobInfo, int number) throws IOException {
         SavedJobInfo savedJobInfo = getSavedJobInfo(job, jobInfo);
         if (savedJobInfo == null) {
             savedJobInfo = new SavedJobInfo();
         }
 
-        savedJobInfo.setTriggerNumber(number);
+        savedJobInfo.setCheckedNumber(number);
 
         saveBuildInfo(job, jobInfo, savedJobInfo);
     }
@@ -406,6 +412,7 @@ public class RemoteJobResultUtils {
         private String remoteJobName;
         private String uid;
         private Integer triggerNumber;
+        private Integer checkedNumber;
         private Map<String, Object> result;
         private Map<String, Object> resultJson;
 
@@ -441,12 +448,17 @@ public class RemoteJobResultUtils {
             this.uid = uid;
         }
 
+        @Deprecated
         public Integer getTriggerNumber() {
             return triggerNumber;
         }
 
-        public void setTriggerNumber(Integer triggerNumber) {
-            this.triggerNumber = triggerNumber;
+        public Integer getCheckedNumber() {
+            return checkedNumber;
+        }
+
+        public void setCheckedNumber(Integer checkedNumber) {
+            this.checkedNumber = checkedNumber;
         }
 
         public Map<String, Object> getResult() {
