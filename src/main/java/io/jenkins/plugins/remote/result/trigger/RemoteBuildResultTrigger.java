@@ -72,6 +72,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
 
     @Override
     protected boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException {
+        boolean modified = false;
         if (CollectionUtils.isNotEmpty(remoteJobInfos)) {
             try {
                 // clean unused build result
@@ -146,7 +147,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                             // result
                                             RemoteJobResultUtils.saveBuildInfo(job, jobInfo, result);
                                             RemoteJobResultUtils.saveBuildResultJson(job, jobInfo, resultJson);
-                                            return true;
+                                            modified = true;
                                         }
                                     }
                                 }
@@ -168,7 +169,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
         } else {
             log.error("No remote job configured!");
         }
-        return false;
+        return modified;
     }
 
     /**
