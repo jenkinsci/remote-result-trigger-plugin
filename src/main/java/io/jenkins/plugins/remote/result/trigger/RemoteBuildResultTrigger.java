@@ -135,6 +135,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                                 }
                                             } catch (UnSuccessfulRequestStatusException | IOException e) {
                                                 // do nothing
+                                                log.error("Request resultJson Exception：" + e.getLocalizedMessage());
                                             }
                                         }
 
