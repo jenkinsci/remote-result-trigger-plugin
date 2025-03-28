@@ -190,7 +190,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
      */
     @Override
     public Collection<? extends Action> getProjectActions() {
-        RemoteBuildResultLogAction action = new RemoteBuildResultLogAction(job, getLogFile());
+        RemoteBuildResultAction action = new RemoteBuildResultAction(job, getLogFile());
         return Collections.singleton(action);
     }
 

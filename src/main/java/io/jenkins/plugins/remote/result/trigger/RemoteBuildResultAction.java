@@ -17,11 +17,11 @@ import java.nio.charset.Charset;
  *
  * @author HW
  */
-public class RemoteBuildResultLogAction implements Action {
+public class RemoteBuildResultAction implements Action {
     private final BuildableItem job;
     private final File logFile;
 
-    public RemoteBuildResultLogAction(BuildableItem job, File logFile) {
+    public RemoteBuildResultAction(BuildableItem job, File logFile) {
         this.job = job;
         this.logFile = logFile;
     }
@@ -97,7 +97,7 @@ public class RemoteBuildResultLogAction implements Action {
 
     @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED")
     public void writeLogTo(XMLOutput out) throws IOException {
-        new AnnotatedLargeText<RemoteBuildResultLogAction>(logFile, Charset.defaultCharset(), true, this).writeHtmlTo(0, out.asWriter());
+        new AnnotatedLargeText<RemoteBuildResultAction>(logFile, Charset.defaultCharset(), true, this).writeHtmlTo(0, out.asWriter());
     }
 
     public String getLog() throws IOException {
