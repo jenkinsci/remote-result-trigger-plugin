@@ -63,19 +63,6 @@ public class RemoteJobResultUtils {
     }
 
     /**
-     * get remote job result json
-     *
-     * @param job      Jenkins job
-     * @param jobInfo  remote Job info
-     * @param buildUrl build url
-     * @return api result
-     */
-    public static SourceMap requestBuildResultJson(Item job, RemoteJobInfo jobInfo, String buildUrl)
-            throws UnSuccessfulRequestStatusException, IOException {
-        return requestRemoteApi(job, jobInfo, "remote-result/result.json?buildUrl=" + buildUrl);
-    }
-
-    /**
      * last checked build number
      *
      * @param job     Jenkins job

@@ -14,7 +14,6 @@ import hudson.model.TaskListener;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import io.jenkins.plugins.remote.result.trigger.exceptions.JsonNotMatchException;
-import io.jenkins.plugins.remote.result.trigger.utils.RemoteJobJsonResultUtils;
 import jenkins.tasks.SimpleBuildStep;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -23,8 +22,6 @@ import org.kohsuke.stapler.DataBoundSetter;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author heweisc@dingtalk.com
@@ -67,22 +64,16 @@ public class RemoteResultBuilder extends Builder implements SimpleBuildStep, Ser
     @Override
     public void perform(@NonNull Run<?, ?> run, @NonNull FilePath workspace, @NonNull EnvVars env, @NonNull Launcher launcher, @NonNull TaskListener listener) throws InterruptedException, IOException {
         if (result != null && result.startsWith("{") && result.endsWith("}")) {
-            try {
-                ObjectMapper mapper = new ObjectMapper();
-                mapper.readValue(result, new TypeReference<Map<String, String>>() {
-                });
-            } catch (Exception e) {
-                throw new JsonNotMatchException("Not Json Map Str:" + result);
-            }
             // envs
             String expand = run.getEnvironment(listener).expand(result);
-            // job dir
-            String url = run.getParent().getAbsoluteUrl();
-
-            Matcher matcher = Pattern.compile("((/job/(\\S+)/)+$)").matcher(url);
-            if (matcher.find()) {
-                String group = matcher.group();
-                RemoteJobJsonResultUtils.saveJson(group, run.getNumber(), expand);
+            // 确认是map json
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                Map<String, Object> result = mapper.readValue(this.result, new TypeReference<Map<String, Object>>() {
+                });
+                run.addAction(new RemoteResultAction(run, result));
+            } catch (Exception e) {
+                throw new JsonNotMatchException("Not Json Map Str:" + result);
             }
             // nothing to do
         } else {
