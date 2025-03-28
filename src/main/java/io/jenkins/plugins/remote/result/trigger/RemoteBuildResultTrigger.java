@@ -114,11 +114,12 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                             SourceMap sourceMap = SourceMap.of(action);
                                             if (RemoteResultAction.class.getName().equals(sourceMap.stringValue("_class"))) {
                                                 resultJson = sourceMap.sourceMap("result");
+                                                break;
                                             }
                                         }
                                         // check result
                                         List<ResultCheck> resultChecks = jobInfo.getResultChecks();
-                                        if (resultChecks != null) {
+                                        if (CollectionUtils.isNotEmpty(resultChecks)) {
                                             if (resultJson == null) {
                                                 log.error("Cannot find remote result json!");
                                             } else {
@@ -155,6 +156,8 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                             if (resultJson != null) {
                                                 RemoteJobResultUtils.saveBuildResultJson(job, jobInfo, resultJson);
                                             }
+                                            // 这个任务检查完成了，继续下一个任务检查
+                                            break;
                                         }
                                     }
                                 }
