@@ -28,8 +28,8 @@ THE SOFTWARE.
     <l:layout title="Remote Result Trigger">
         <st:include it="${it.owner}" page="sidepanel.jelly"/>
         <l:main-panel>
-            <div>
-                <h2>Remote Result Trigger Log</h2>
+            <section class="jenkins-section">
+                <div class="jenkins-section__title">Trigger Log</div>
                 <j:set var="log" value="${it.log}"/>
                 <j:choose>
                     <j:when test="${empty(log)}">
@@ -42,7 +42,31 @@ THE SOFTWARE.
                         </pre>
                     </j:otherwise>
                 </j:choose>
-            </div>
+            </section>
+            <j:if test="${!it.savedJobInfos.isEmpty()}">
+                <section class="jenkins-section">
+                    <div class="jenkins-section__title">Last Triggered Info</div>
+                    <div class="repeated-container">
+                        <j:forEach var="info" items="${it.savedJobInfos}">
+                            <div class="repeated-chunk">
+                                <div>
+                                    <b>${info.remoteJobUrl}</b>
+                                </div>
+                                <div>
+                                    <div class="jenkins-form-label">Remote result</div>
+                                    <div><pre>${info.result}</pre></div>
+                                </div>
+                                <j:if test="${info.resultJson!=null}">
+                                    <div>
+                                        <div class="jenkins-form-label">Remote result json</div>
+                                        <div><pre>${info.resultJson}</pre></div>
+                                    </div>
+                                </j:if>
+                            </div>
+                        </j:forEach>
+                    </div>
+                </section>
+            </j:if>
         </l:main-panel>
     </l:layout>
 </j:jelly>

@@ -1,17 +1,23 @@
 package io.jenkins.plugins.remote.result.trigger;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Functions;
 import hudson.Util;
 import hudson.console.AnnotatedLargeText;
 import hudson.model.Action;
 import hudson.model.BuildableItem;
+import io.jenkins.plugins.remote.result.trigger.model.ActionSavedJobInfo;
+import io.jenkins.plugins.remote.result.trigger.model.SavedJobInfo;
+import io.jenkins.plugins.remote.result.trigger.utils.RemoteJobResultUtils;
 import org.apache.commons.jelly.XMLOutput;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * log action
@@ -25,6 +31,22 @@ public class RemoteBuildResultTriggerAction implements Action {
     public RemoteBuildResultTriggerAction(BuildableItem job, File logFile) {
         this.job = job;
         this.logFile = logFile;
+    }
+
+    public List<ActionSavedJobInfo> getSavedJobInfos() throws IOException {
+        ObjectWriter jsonPretty = new ObjectMapper().writerWithDefaultPrettyPrinter();
+        List<SavedJobInfo> savedJobInfos = RemoteJobResultUtils.getSavedJobInfos(job);
+        List<ActionSavedJobInfo> results = new ArrayList<>();
+        for (SavedJobInfo savedJobInfo : savedJobInfos) {
+            ActionSavedJobInfo info = new ActionSavedJobInfo();
+            info.setRemoteJobUrl(savedJobInfo.getRemoteJobUrl());
+            info.setResult(jsonPretty.writeValueAsString(savedJobInfo.getResult()));
+            if (savedJobInfo.getResultJson() != null) {
+                info.setResultJson(jsonPretty.writeValueAsString(savedJobInfo.getResultJson()));
+            }
+            results.add(info);
+        }
+        return results;
     }
 
     /**
