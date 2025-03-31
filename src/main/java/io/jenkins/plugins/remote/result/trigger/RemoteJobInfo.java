@@ -180,14 +180,14 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
         /**
          * Validates the jobName
          *
-         * @param remoteJobName Remote JobName
+         * @param remoteJobUrl Remote Job Url
          * @return FormValidation object
          */
         @POST
         @Restricted(NoExternalUse.class)
-        public FormValidation doCheckRemoteJobName(@QueryParameter String remoteJobName) {
-            if (StringUtils.isEmpty(remoteJobName)) {
-                return FormValidation.error("Please enter a job name");
+        public FormValidation doCheckRemoteJobUrl(@QueryParameter String remoteJobUrl) {
+            if (StringUtils.isEmpty(remoteJobUrl)) {
+                return FormValidation.error("Please enter a remote job url");
             }
             return FormValidation.ok();
         }
