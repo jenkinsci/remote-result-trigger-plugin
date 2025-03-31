@@ -64,7 +64,7 @@ public class RemoteBuildResultAction implements Action {
      */
     @Override
     public String getDisplayName() {
-        return "Remote Result Trigger Log";
+        return "Remote Result Trigger";
     }
 
     /**
@@ -92,7 +92,7 @@ public class RemoteBuildResultAction implements Action {
      */
     @Override
     public String getUrlName() {
-        return "remote-build-result-trigger-log";
+        return "remote-result-trigger";
     }
 
     @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED")
