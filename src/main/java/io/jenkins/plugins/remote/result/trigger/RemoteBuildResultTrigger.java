@@ -1,5 +1,8 @@
 package io.jenkins.plugins.remote.result.trigger;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.Action;
@@ -74,6 +77,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
     @SuppressWarnings({"rawtypes", "unchecked"})
     protected boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException {
         boolean modified = false;
+        ObjectWriter jsonPretty = new ObjectMapper().writerWithDefaultPrettyPrinter();
         if (CollectionUtils.isNotEmpty(remoteJobInfos)) {
             try {
                 // clean unused build result
@@ -95,6 +99,11 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                         for (int number = nextBuildNumber - 1; number > checkedNumber; number--) {
                             SourceMap result = RemoteJobResultUtils.requestBuildResult(job, jobInfo, number);
                             if (result != null) {
+                                // 清理result,并提取resultJson
+                                cleanAndFixJsonResult(result);
+
+                                log.info("Remote build result: " + jsonPretty.writeValueAsString(result.getSource()));
+
                                 Integer buildNumber = result.integerValue("number");
                                 String buildUrl = result.stringValue("url");
 
@@ -108,15 +117,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                     if (jobInfo.getTriggerResults().contains(result.stringValue("result"))) {
                                         log.info("Result confirmed: " + result.stringValue("result"));
                                         // remote result json
-                                        SourceMap resultJson = null;
-                                        List<Map> actions = result.listValue("actions", Map.class);
-                                        for (Map action : actions) {
-                                            SourceMap sourceMap = SourceMap.of(action);
-                                            if (RemoteResultAction.class.getName().equals(sourceMap.stringValue("_class"))) {
-                                                resultJson = sourceMap.sourceMap("result");
-                                                break;
-                                            }
-                                        }
+                                        SourceMap resultJson = result.sourceMap("resultJson");
                                         // check result
                                         List<ResultCheck> resultChecks = jobInfo.getResultChecks();
                                         if (CollectionUtils.isNotEmpty(resultChecks)) {
@@ -190,7 +191,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
      */
     @Override
     public Collection<? extends Action> getProjectActions() {
-        RemoteBuildResultAction action = new RemoteBuildResultAction(job, getLogFile());
+        RemoteBuildResultTriggerAction action = new RemoteBuildResultTriggerAction(job, getLogFile());
         return Collections.singleton(action);
     }
 
@@ -206,6 +207,31 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
 
     public List<RemoteJobInfo> getRemoteJobInfos() {
         return remoteJobInfos;
+    }
+
+    /**
+     * 清理并格式化返回
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private void cleanAndFixJsonResult(SourceMap result) throws JsonProcessingException {
+        Map<String, Object> source = result.getSource();
+        // 清理changeSets、culprits、artifacts等
+        source.remove("changeSets");
+        source.remove("culprits");
+        source.remove("artifacts");
+        source.remove("_class");
+        // 清理actions
+        List<Map> actions = result.listValue("actions", Map.class);
+        for (Map action : actions) {
+            SourceMap sourceMap = SourceMap.of(action);
+            if (RemoteResultAction.class.getName().equals(sourceMap.stringValue("_class"))) {
+                Map resultJson = sourceMap.sourceMap("result").getSource();
+                resultJson.remove("_class");
+                source.put("resultJson", resultJson);
+                break;
+            }
+        }
+        source.remove("actions");
     }
 
     @Extension

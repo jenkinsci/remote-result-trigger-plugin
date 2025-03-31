@@ -11,17 +11,18 @@ import org.apache.commons.jelly.XMLOutput;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * log action
  *
  * @author HW
  */
-public class RemoteBuildResultAction implements Action {
+public class RemoteBuildResultTriggerAction implements Action {
     private final BuildableItem job;
     private final File logFile;
 
-    public RemoteBuildResultAction(BuildableItem job, File logFile) {
+    public RemoteBuildResultTriggerAction(BuildableItem job, File logFile) {
         this.job = job;
         this.logFile = logFile;
     }
@@ -97,11 +98,11 @@ public class RemoteBuildResultAction implements Action {
 
     @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED")
     public void writeLogTo(XMLOutput out) throws IOException {
-        new AnnotatedLargeText<RemoteBuildResultAction>(logFile, Charset.defaultCharset(), true, this).writeHtmlTo(0, out.asWriter());
+        new AnnotatedLargeText<RemoteBuildResultTriggerAction>(logFile, Charset.defaultCharset(), true, this).writeHtmlTo(0, out.asWriter());
     }
 
     public String getLog() throws IOException {
-        return Util.loadFile(logFile);
+        return Util.loadFile(logFile, StandardCharsets.UTF_8);
     }
 
     @SuppressWarnings("unused")
