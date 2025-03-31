@@ -80,6 +80,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
         ObjectWriter jsonPretty = new ObjectMapper().writerWithDefaultPrettyPrinter();
         if (CollectionUtils.isNotEmpty(remoteJobInfos)) {
             try {
+                log.info("Job count: " + remoteJobInfos.size());
                 // clean unused build result
                 List<SavedJobInfo> removedJobs = RemoteJobResultUtils.cleanUnusedBuildInfo(job, remoteJobInfos);
                 if (!removedJobs.isEmpty()) {
