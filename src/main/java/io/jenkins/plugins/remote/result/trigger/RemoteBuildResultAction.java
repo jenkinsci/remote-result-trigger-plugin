@@ -51,7 +51,7 @@ public class RemoteBuildResultAction implements Action {
      */
     @Override
     public String getIconFileName() {
-        return "clipboard.gif";
+        return "symbol-details";
     }
 
     /**
