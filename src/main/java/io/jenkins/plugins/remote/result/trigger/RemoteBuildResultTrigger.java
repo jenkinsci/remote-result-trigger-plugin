@@ -74,7 +74,6 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
     }
 
     @Override
-    @SuppressWarnings({"rawtypes", "unchecked"})
     protected boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException {
         boolean modified = false;
         ObjectWriter jsonPretty = new ObjectMapper().writerWithDefaultPrettyPrinter();
