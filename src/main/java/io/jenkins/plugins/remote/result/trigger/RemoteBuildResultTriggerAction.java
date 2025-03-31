@@ -98,7 +98,7 @@ public class RemoteBuildResultTriggerAction implements Action {
 
     @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED")
     public void writeLogTo(XMLOutput out) throws IOException {
-        new AnnotatedLargeText<RemoteBuildResultTriggerAction>(logFile, Charset.defaultCharset(), true, this).writeHtmlTo(0, out.asWriter());
+        new AnnotatedLargeText<RemoteBuildResultTriggerAction>(logFile, StandardCharsets.UTF_8, true, this).writeHtmlTo(0, out.asWriter());
     }
 
     public String getLog() throws IOException {

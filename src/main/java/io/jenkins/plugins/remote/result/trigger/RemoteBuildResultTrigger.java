@@ -101,13 +101,12 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                 // 清理result,并提取resultJson
                                 cleanAndFixJsonResult(result);
 
-                                log.info("Remote build result: " + jsonPretty.writeValueAsString(result.getSource()));
-
                                 Integer buildNumber = result.integerValue("number");
                                 String buildUrl = result.stringValue("url");
 
                                 log.info("Last build url: " + buildUrl);
                                 log.info("Last build number: " + buildNumber);
+                                log.info("Remote build result: " + jsonPretty.writeValueAsString(result.getSource()));
 
                                 // build completed
                                 if (!(result.booleanValue("building") || result.booleanValue("inProgress"))) {
