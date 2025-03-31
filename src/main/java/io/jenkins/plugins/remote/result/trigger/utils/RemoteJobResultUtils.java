@@ -40,8 +40,8 @@ public class RemoteJobResultUtils {
      */
     public static Integer requestNextBuildNumber(Item job, RemoteJobInfo jobInfo)
             throws UnSuccessfulRequestStatusException, IOException {
-        String api = "job/" + jobInfo.getRemoteJobName() + "/api/json";
-        SourceMap result = requestRemoteApi(job, jobInfo, jobApiPath(api));
+        String api = jobInfo.getRemoteJobUrl() + "/api/json";
+        SourceMap result = requestRemoteApi(job, jobInfo, api);
         if (result != null) {
             return result.integerValue("nextBuildNumber");
         }
@@ -58,8 +58,8 @@ public class RemoteJobResultUtils {
      */
     public static SourceMap requestBuildResult(Item job, RemoteJobInfo jobInfo, int number)
             throws UnSuccessfulRequestStatusException, IOException {
-        String api = "job/" + jobInfo.getRemoteJobName() + "/" + number + "/api/json";
-        return requestRemoteApi(job, jobInfo, jobApiPath(api));
+        String api = jobInfo.getRemoteJobUrl() + "/" + number + "/api/json";
+        return requestRemoteApi(job, jobInfo, api);
     }
 
     /**
@@ -176,7 +176,7 @@ public class RemoteJobResultUtils {
         // remote job info
         savedJobInfo.setRemoteServer(jobInfo.getRemoteServer());
         savedJobInfo.setRemoteJob(jobInfo.getId());
-        savedJobInfo.setRemoteJobName(jobInfo.getRemoteJobName());
+        savedJobInfo.setRemoteJobUrl(jobInfo.getRemoteJobUrl());
         savedJobInfo.setUid(jobInfo.getUid());
 
         // get saved list
@@ -212,15 +212,14 @@ public class RemoteJobResultUtils {
                 envs.putAll(generateEnvs("REMOTE_", savedJobInfo));
             }
             // prefix with job id
-            String prefix = new StringBuilder("REMOTE_")
-                    .append(StringUtils.isNotEmpty(savedJobInfo.getUid()) ? savedJobInfo.uid : savedJobInfo.remoteJobName)
-                    .append("_")
-                    .toString();
+            String prefix = "REMOTE_" +
+                    (StringUtils.isNotEmpty(savedJobInfo.getUid()) ? savedJobInfo.uid : savedJobInfo.remoteJobName) +
+                    "_";
             envs.putAll(generateEnvs(prefix, savedJobInfo));
         }
         // jobs list
         List<String> jobs = savedJobInfos.stream()
-                .map(info -> StringUtils.isNotBlank(info.getUid()) ? info.getUid() : info.getRemoteJobName())
+                .map(info -> StringUtils.isNotBlank(info.getUid()) ? info.getUid() : info.getRemoteJobUrl())
                 .collect(Collectors.toUnmodifiableList());
         envs.put("REMOTE_JOBS", new ObjectMapper().writeValueAsString(jobs));
         return envs;
@@ -264,11 +263,7 @@ public class RemoteJobResultUtils {
         }
 
         // api url
-        String url = new StringBuilder(remoteServer.getUrl())
-                .append(remoteServer.getUrl().endsWith("/") ? "" : "/")
-                .append(apiUrl)
-                .toString();
-        Request request = requestBuilder.url(url).get().build();
+        Request request = requestBuilder.url(apiUrl).get().build();
 
         Call call = okHttpClient.newCall(request);
         try (Response response = call.execute()) {
@@ -282,7 +277,7 @@ public class RemoteJobResultUtils {
                     return SourceMap.of(mapper.readValue(body, Map.class));
                 }
             } else {
-                throw new UnSuccessfulRequestStatusException("Response UnSuccess Code:" + response.code() + ",Url:" + url, response.code(), url);
+                throw new UnSuccessfulRequestStatusException("Response UnSuccess Code:" + response.code() + ",Url:" + apiUrl, response.code(), apiUrl);
             }
         }
         return null;
@@ -337,6 +332,7 @@ public class RemoteJobResultUtils {
      * @param savedJobInfo saved info
      * @return envs
      */
+    @SuppressWarnings({"rawtypes", "unchecked"})
     private static Map<String, String> generateEnvs(String prefix, SavedJobInfo savedJobInfo) {
         Map<String, String> envs = new HashMap<>();
         if (savedJobInfo.result != null) {
@@ -362,10 +358,7 @@ public class RemoteJobResultUtils {
                             for (Map parameter : parameters) {
                                 SourceMap parameterMap = SourceMap.of(parameter);
                                 if (parameterMap.stringValue("name") != null) {
-                                    String key = new StringBuilder(prefix)
-                                            .append("PARAMETER_")
-                                            .append(parameterMap.stringValue("name"))
-                                            .toString();
+                                    String key = prefix + "PARAMETER_" + parameterMap.stringValue("name");
                                     envs.put(key, parameterMap.stringValue("value"));
                                 }
                             }
@@ -386,18 +379,17 @@ public class RemoteJobResultUtils {
         return envs;
     }
 
-    private static String jobApiPath(String jobApi) {
-        return jobApi.replace("//", "/").replaceFirst("^job/job/", "job/");
-    }
-
     /**
      * Info
      */
     public static class SavedJobInfo {
         private String remoteServer;
         private String remoteJob;
+        @Deprecated
         private String remoteJobName;
+        private String remoteJobUrl;
         private String uid;
+        @Deprecated
         private Integer triggerNumber;
         private Integer checkedNumber;
         private Map<String, Object> result;
@@ -419,12 +411,22 @@ public class RemoteJobResultUtils {
             this.remoteJob = remoteJob;
         }
 
+        @Deprecated
         public String getRemoteJobName() {
             return remoteJobName;
         }
 
+        @Deprecated
         public void setRemoteJobName(String remoteJobName) {
             this.remoteJobName = remoteJobName;
+        }
+
+        public String getRemoteJobUrl() {
+            return remoteJobUrl;
+        }
+
+        public void setRemoteJobUrl(String remoteJobUrl) {
+            this.remoteJobUrl = remoteJobUrl;
         }
 
         public String getUid() {
