@@ -84,7 +84,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                     }
                 }
                 for (RemoteJobInfo jobInfo : remoteJobInfos) {
-                    log.info("================== Job " + jobInfo.getRemoteJobUrl() + " ==================");
+                    log.info("================== " + jobInfo.getRemoteJobUrl() + " ==================");
                     // get next build number
                     Integer nextBuildNumber = RemoteJobResultUtils.requestNextBuildNumber(job, jobInfo);
                     if (nextBuildNumber != null) {
