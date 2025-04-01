@@ -49,6 +49,11 @@ public class SavedJobInfo {
         return remoteJobUrl;
     }
 
+    public String getBuildUrl() {
+        Object object = result.get("url");
+        return object != null ? object.toString() : null;
+    }
+
     public void setRemoteJobUrl(String remoteJobUrl) {
         this.remoteJobUrl = remoteJobUrl;
     }

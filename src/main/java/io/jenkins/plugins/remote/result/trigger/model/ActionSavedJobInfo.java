@@ -7,6 +7,7 @@ public class ActionSavedJobInfo {
     private String remoteJobUrl;
     private String result;
     private String resultJson;
+    private String buildUrl;
 
     public String getRemoteJobUrl() {
         return remoteJobUrl;
@@ -30,5 +31,13 @@ public class ActionSavedJobInfo {
 
     public void setResultJson(String resultJson) {
         this.resultJson = resultJson;
+    }
+
+    public String getBuildUrl() {
+        return buildUrl;
+    }
+
+    public void setBuildUrl(String buildUrl) {
+        this.buildUrl = buildUrl;
     }
 }

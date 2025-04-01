@@ -23,7 +23,7 @@ THE SOFTWARE.
 -->
 
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout"
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:f="/lib/form"
 >
     <l:layout title="Remote Result Trigger">
         <st:include it="${it.owner}" page="sidepanel.jelly"/>
@@ -49,19 +49,29 @@ THE SOFTWARE.
                     <div class="repeated-container">
                         <j:forEach var="info" items="${it.savedJobInfos}">
                             <div class="repeated-chunk">
-                                <div>
+                                <div class="jenkins-form-item tr">
                                     <b>${info.remoteJobUrl}</b>
                                 </div>
-                                <div>
-                                    <div class="jenkins-form-label">Remote result</div>
-                                    <div><pre>${info.result}</pre></div>
-                                </div>
-                                <j:if test="${info.resultJson!=null}">
+                                <div class="jenkins-form-item tr">
                                     <div>
-                                        <div class="jenkins-form-label">Remote result json</div>
-                                        <div><pre>${info.resultJson}</pre></div>
+                                        <div class="jenkins-form-label">Build url</div>
+                                        <a href="${info.buildUrl}" target="_blank">${info.buildUrl}</a>
                                     </div>
-                                </j:if>
+                                </div>
+                                <div class="jenkins-form-item tr">
+                                   <f:advanced title="Result">
+                                       <div>
+                                           <div class="jenkins-form-label">Remote result</div>
+                                           <div><pre>${info.result}</pre></div>
+                                       </div>
+                                       <j:if test="${info.resultJson!=null}">
+                                           <div>
+                                               <div class="jenkins-form-label">Remote result json</div>
+                                               <div><pre>${info.resultJson}</pre></div>
+                                           </div>
+                                       </j:if>
+                                   </f:advanced>
+                                </div>
                             </div>
                         </j:forEach>
                     </div>

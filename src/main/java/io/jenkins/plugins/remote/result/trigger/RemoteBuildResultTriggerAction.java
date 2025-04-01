@@ -40,6 +40,7 @@ public class RemoteBuildResultTriggerAction implements Action {
         for (SavedJobInfo savedJobInfo : savedJobInfos) {
             ActionSavedJobInfo info = new ActionSavedJobInfo();
             info.setRemoteJobUrl(savedJobInfo.getRemoteJobUrl());
+            info.setBuildUrl(savedJobInfo.getBuildUrl());
             info.setResult(jsonPretty.writeValueAsString(savedJobInfo.getResult()));
             if (savedJobInfo.getResultJson() != null) {
                 info.setResultJson(jsonPretty.writeValueAsString(savedJobInfo.getResultJson()));
