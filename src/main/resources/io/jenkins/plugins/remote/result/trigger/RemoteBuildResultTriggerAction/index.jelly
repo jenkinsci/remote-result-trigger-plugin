@@ -1,0 +1,82 @@
+<!--
+The MIT License
+
+Copyright (c) 2004-2009, Sun Microsystems, Inc., Kohsuke Kawaguchi
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+-->
+
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:f="/lib/form"
+>
+    <l:layout title="Remote Result Trigger">
+        <st:include it="${it.owner}" page="sidepanel.jelly"/>
+        <l:main-panel>
+            <section class="jenkins-section">
+                <div class="jenkins-section__title">Trigger Log</div>
+                <j:set var="log" value="${it.log}"/>
+                <j:choose>
+                    <j:when test="${empty(log)}">
+                        ${%Polling has not run yet.}
+                    </j:when>
+                    <j:otherwise>
+                        <pre>
+                            <st:getOutput var="output"/>
+                            <j:whitespace>${it.writeLogTo(output)}</j:whitespace>
+                        </pre>
+                    </j:otherwise>
+                </j:choose>
+            </section>
+            <j:if test="${!it.savedJobInfos.isEmpty()}">
+                <section class="jenkins-section">
+                    <div class="jenkins-section__title">Last Triggered Info</div>
+                    <div class="repeated-container">
+                        <j:forEach var="info" items="${it.savedJobInfos}">
+                            <div class="repeated-chunk">
+                                <div class="jenkins-form-item tr">
+                                    <b>${info.remoteJobUrl}</b>
+                                </div>
+                                <div class="jenkins-form-item tr">
+                                    <div>
+                                        <div class="jenkins-form-label">Build url</div>
+                                        <a href="${info.buildUrl}" target="_blank">${info.buildUrl}</a>
+                                    </div>
+                                </div>
+                                <div class="jenkins-form-item tr">
+                                   <f:advanced title="Result">
+                                       <div>
+                                           <div class="jenkins-form-label">Remote result</div>
+                                           <div><pre>${info.result}</pre></div>
+                                       </div>
+                                       <j:if test="${info.resultJson!=null}">
+                                           <div>
+                                               <div class="jenkins-form-label">Remote result json</div>
+                                               <div><pre>${info.resultJson}</pre></div>
+                                           </div>
+                                       </j:if>
+                                   </f:advanced>
+                                </div>
+                            </div>
+                        </j:forEach>
+                    </div>
+                </section>
+            </j:if>
+        </l:main-panel>
+    </l:layout>
+</j:jelly>

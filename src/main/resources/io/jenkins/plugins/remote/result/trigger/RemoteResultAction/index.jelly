@@ -23,25 +23,14 @@ THE SOFTWARE.
 -->
 
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
-         xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-    <l:layout>
-        <st:include it="${it.owner}" page="sidepanel.jelly"/>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout">
+    <l:layout title="Remote Result Json">
+        <st:include page="sidepanel.jelly" it="${it.run}"/>
         <l:main-panel>
-            <h1>RemoteBuildResultTrigger Log</h1>
-
-            <j:set var="log" value="${it.log}"/>
-            <j:choose>
-                <j:when test="${empty(log)}">
-                    ${%Polling has not run yet.}
-                </j:when>
-                <j:otherwise>
-                    <pre>
-                        <st:getOutput var="output"/>
-                        <j:whitespace>${it.writeLogTo(output)}</j:whitespace>
-                    </pre>
-                </j:otherwise>
-            </j:choose>
+            <h1>Remote Result Json</h1>
+            <pre>
+                ${it.prettyJson}
+            </pre>
         </l:main-panel>
     </l:layout>
 </j:jelly>

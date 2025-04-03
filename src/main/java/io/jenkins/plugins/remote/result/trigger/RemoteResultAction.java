@@ -1,29 +1,44 @@
 package io.jenkins.plugins.remote.result.trigger;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import hudson.Functions;
-import hudson.Util;
-import hudson.console.AnnotatedLargeText;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import hudson.model.Action;
-import hudson.model.BuildableItem;
-import org.apache.commons.jelly.XMLOutput;
+import hudson.model.Run;
+import org.kohsuke.stapler.export.Exported;
+import org.kohsuke.stapler.export.ExportedBean;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.Charset;
+import java.util.Map;
 
 /**
- * log action
- *
- * @author HW
+ * @author heweisc@dingtalk.com
  */
-public class RemoteBuildResultLogAction implements Action {
-    private final BuildableItem job;
-    private final File logFile;
+@ExportedBean
+public class RemoteResultAction implements Action {
+    private final Run<?, ?> run;
+    private final Map<String, Object> result;
 
-    public RemoteBuildResultLogAction(BuildableItem job, File logFile) {
-        this.job = job;
-        this.logFile = logFile;
+    public RemoteResultAction(Run<?, ?> run, Map<String, Object> result) {
+        this.run = run;
+        this.result = result;
+    }
+
+    @Exported(visibility = 2)
+    public Map<String, Object> getResult() {
+        return result;
+    }
+
+    /**
+     * view 显示用
+     */
+    public String getPrettyJson() throws JsonProcessingException {
+        if (result != null) {
+            return new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(result);
+        }
+        return null;
+    }
+
+    public Run<?, ?> getRun() {
+        return this.run;
     }
 
     /**
@@ -46,12 +61,10 @@ public class RemoteBuildResultLogAction implements Action {
      * and no task list item. The other case where this is useful is
      * to avoid showing links that require a privilege when the user is anonymous.
      * @see <a href="https://www.jenkins.io/doc/developer/views/symbols/">Jenkins Symbols</a>
-     * @see Functions#isAnonymous()
-     * @see Functions#getIconFilePath(Action)
      */
     @Override
     public String getIconFileName() {
-        return "clipboard.gif";
+        return "symbol-details";
     }
 
     /**
@@ -64,7 +77,7 @@ public class RemoteBuildResultLogAction implements Action {
      */
     @Override
     public String getDisplayName() {
-        return "Remote Result Trigger Log";
+        return "Remote Result Json";
     }
 
     /**
@@ -88,24 +101,9 @@ public class RemoteBuildResultLogAction implements Action {
      *
      * @return null if this action object doesn't need to be bound to web
      * (when you do that, be sure to also return null from {@link #getIconFileName()}.
-     * @see Functions#getActionUrl(String, Action)
      */
     @Override
     public String getUrlName() {
-        return "remote-build-result-trigger-log";
-    }
-
-    @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED")
-    public void writeLogTo(XMLOutput out) throws IOException {
-        new AnnotatedLargeText<RemoteBuildResultLogAction>(logFile, Charset.defaultCharset(), true, this).writeHtmlTo(0, out.asWriter());
-    }
-
-    public String getLog() throws IOException {
-        return Util.loadFile(logFile);
-    }
-
-    @SuppressWarnings("unused")
-    public BuildableItem getOwner() {
-        return job;
+        return "remote-result-json";
     }
 }
