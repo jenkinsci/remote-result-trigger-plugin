@@ -1,6 +1,7 @@
 package io.jenkins.plugins.remote.result.trigger;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -72,10 +73,9 @@ public class RemoteResultBuilder extends Builder implements SimpleBuildStep, Ser
                 Map<String, Object> result = mapper.readValue(this.result, new TypeReference<Map<String, Object>>() {
                 });
                 run.addAction(new RemoteResultAction(run, result));
-            } catch (Exception e) {
-                throw new JsonNotMatchException("Not Json Map Str:" + result);
+            } catch (JsonProcessingException e) {
+                throw new JsonNotMatchException("Not Json Map Str:" + result, e);
             }
-            // nothing to do
         } else {
             throw new JsonNotMatchException("Not Json Map Str:" + result);
         }
