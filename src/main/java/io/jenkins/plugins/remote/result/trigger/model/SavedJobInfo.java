@@ -4,6 +4,8 @@ import java.util.Map;
 
 /**
  * Info
+ *
+ * @author heweisc@dingtalk.com
  */
 public class SavedJobInfo {
     private String remoteServer;
@@ -50,8 +52,10 @@ public class SavedJobInfo {
     }
 
     public String getBuildUrl() {
-        Object object = result.get("url");
-        return object != null ? object.toString() : null;
+        if (result != null && result.get("url") != null) {
+            return result.get("url").toString();
+        }
+        return null;
     }
 
     public void setRemoteJobUrl(String remoteJobUrl) {

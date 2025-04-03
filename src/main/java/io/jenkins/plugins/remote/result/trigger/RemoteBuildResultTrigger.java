@@ -73,6 +73,16 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
 
     @Override
     protected Action[] getScheduledActions(Node pollingNode, XTriggerLog log) {
+        if (job != null) {
+            try {
+                List<SavedJobInfo> savedJobInfos = RemoteJobResultUtils.getSavedJobInfos(job);
+                return new Action[]{
+                        new RemoteResultJobProperty(job, savedJobInfos)
+                };
+            } catch (IOException e) {
+                // do nothing
+            }
+        }
         return new Action[0];
     }
 
