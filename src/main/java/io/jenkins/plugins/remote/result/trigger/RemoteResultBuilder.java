@@ -70,7 +70,7 @@ public class RemoteResultBuilder extends Builder implements SimpleBuildStep, Ser
             // 确认是map json
             try {
                 ObjectMapper mapper = new ObjectMapper();
-                Map<String, Object> result = mapper.readValue(this.result, new TypeReference<Map<String, Object>>() {
+                Map<String, Object> result = mapper.readValue(expand, new TypeReference<Map<String, Object>>() {
                 });
                 run.addAction(new RemoteResultAction(run, result));
             } catch (JsonProcessingException e) {
