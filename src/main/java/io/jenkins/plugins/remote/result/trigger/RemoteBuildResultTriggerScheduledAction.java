@@ -2,40 +2,36 @@ package io.jenkins.plugins.remote.result.trigger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Functions;
-import hudson.Util;
-import hudson.console.AnnotatedLargeText;
 import hudson.model.Action;
 import hudson.model.BuildableItem;
 import io.jenkins.plugins.remote.result.trigger.model.ActionSavedJobInfo;
 import io.jenkins.plugins.remote.result.trigger.model.SavedJobInfo;
-import io.jenkins.plugins.remote.result.trigger.utils.RemoteJobResultUtils;
-import org.apache.commons.jelly.XMLOutput;
+import org.kohsuke.stapler.export.ExportedBean;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * log action
- *
- * @author HW
+ * @author heweisc@dingtalk.com
  */
-public class RemoteBuildResultTriggerAction implements Action {
-    private final BuildableItem job;
-    private final File logFile;
+@ExportedBean
+public class RemoteBuildResultTriggerScheduledAction implements Action {
+    private final transient BuildableItem item;
+    private final List<SavedJobInfo> savedJobInfos;
 
-    public RemoteBuildResultTriggerAction(BuildableItem job, File logFile) {
-        this.job = job;
-        this.logFile = logFile;
+    public RemoteBuildResultTriggerScheduledAction(BuildableItem item, List<SavedJobInfo> savedJobInfos) {
+        this.item = item;
+        this.savedJobInfos = savedJobInfos;
     }
 
-    public List<ActionSavedJobInfo> getSavedJobInfos() throws IOException {
+    public BuildableItem getItem() {
+        return item;
+    }
+
+    public List<ActionSavedJobInfo> getDisplaySavedJobInfos() throws IOException {
         ObjectWriter jsonPretty = new ObjectMapper().writerWithDefaultPrettyPrinter();
-        List<SavedJobInfo> savedJobInfos = RemoteJobResultUtils.getSavedJobInfos(job);
         List<ActionSavedJobInfo> results = new ArrayList<>();
         for (SavedJobInfo savedJobInfo : savedJobInfos) {
             ActionSavedJobInfo info = new ActionSavedJobInfo();
@@ -112,24 +108,9 @@ public class RemoteBuildResultTriggerAction implements Action {
      *
      * @return null if this action object doesn't need to be bound to web
      * (when you do that, be sure to also return null from {@link #getIconFileName()}.
-     * @see Functions#getActionUrl(String, Action)
      */
     @Override
     public String getUrlName() {
         return "remote-result-trigger";
-    }
-
-    @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED")
-    public void writeLogTo(XMLOutput out) throws IOException {
-        new AnnotatedLargeText<RemoteBuildResultTriggerAction>(logFile, StandardCharsets.UTF_8, true, this).writeHtmlTo(0, out.asWriter());
-    }
-
-    public String getLog() throws IOException {
-        return Util.loadFile(logFile, StandardCharsets.UTF_8);
-    }
-
-    @SuppressWarnings("unused")
-    public BuildableItem getOwner() {
-        return job;
     }
 }

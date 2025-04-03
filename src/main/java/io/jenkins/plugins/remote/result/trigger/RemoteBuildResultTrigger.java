@@ -72,21 +72,6 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
     }
 
     @Override
-    protected Action[] getScheduledActions(Node pollingNode, XTriggerLog log) {
-        if (job != null) {
-            try {
-                List<SavedJobInfo> savedJobInfos = RemoteJobResultUtils.getSavedJobInfos(job);
-                return new Action[]{
-                        new RemoteResultJobProperty(job, savedJobInfos)
-                };
-            } catch (IOException e) {
-                // do nothing
-            }
-        }
-        return new Action[0];
-    }
-
-    @Override
     @SuppressFBWarnings(value = "NP_NULL_PARAM_DEREF")
     protected boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException {
         boolean modified = false;
@@ -200,6 +185,21 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
         return modified;
     }
 
+    @Override
+    protected Action[] getScheduledActions(Node pollingNode, XTriggerLog log) {
+        if (job != null) {
+            try {
+                List<SavedJobInfo> savedJobInfos = RemoteJobResultUtils.getSavedJobInfos(job);
+                return new Action[]{
+                        new RemoteBuildResultTriggerScheduledAction(job, savedJobInfos)
+                };
+            } catch (IOException e) {
+                // do nothing
+            }
+        }
+        return new Action[0];
+    }
+
     /**
      * {@link Action}s to be displayed in the job page.
      *
@@ -208,7 +208,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
      */
     @Override
     public Collection<? extends Action> getProjectActions() {
-        RemoteBuildResultTriggerAction action = new RemoteBuildResultTriggerAction(job, getLogFile());
+        RemoteBuildResultTriggerProjectAction action = new RemoteBuildResultTriggerProjectAction(job, getLogFile());
         return Collections.singleton(action);
     }
 
