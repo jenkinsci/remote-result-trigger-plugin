@@ -61,8 +61,6 @@ public class RemoteResultAction implements Action {
      * and no task list item. The other case where this is useful is
      * to avoid showing links that require a privilege when the user is anonymous.
      * @see <a href="https://www.jenkins.io/doc/developer/views/symbols/">Jenkins Symbols</a>
-     * @see Functions#isAnonymous()
-     * @see Functions#getIconFilePath(Action)
      */
     @Override
     public String getIconFileName() {
@@ -103,7 +101,6 @@ public class RemoteResultAction implements Action {
      *
      * @return null if this action object doesn't need to be bound to web
      * (when you do that, be sure to also return null from {@link #getIconFileName()}.
-     * @see Functions#getActionUrl(String, Action)
      */
     @Override
     public String getUrlName() {
