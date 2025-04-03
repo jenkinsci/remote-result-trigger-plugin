@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 import hudson.Extension;
 import hudson.model.Action;
 import hudson.model.Node;
@@ -75,10 +77,14 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
     }
 
     @Override
+    @SuppressFBWarnings(value = "NP_NULL_PARAM_DEREF")
     protected boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException {
         boolean modified = false;
         ObjectWriter jsonPretty = new ObjectMapper().writerWithDefaultPrettyPrinter();
-        if (CollectionUtils.isNotEmpty(remoteJobInfos) && job != null) {
+        // check job is null
+        if (job == null) {
+            return false;
+        } else if (CollectionUtils.isNotEmpty(remoteJobInfos)) {
             try {
                 log.info("Job count: " + remoteJobInfos.size());
                 // clean unused build result
