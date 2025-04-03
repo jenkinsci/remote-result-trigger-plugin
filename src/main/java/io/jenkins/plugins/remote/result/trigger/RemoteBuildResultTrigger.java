@@ -78,7 +78,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
     protected boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException {
         boolean modified = false;
         ObjectWriter jsonPretty = new ObjectMapper().writerWithDefaultPrettyPrinter();
-        if (CollectionUtils.isNotEmpty(remoteJobInfos)) {
+        if (CollectionUtils.isNotEmpty(remoteJobInfos) && job != null) {
             try {
                 log.info("Job count: " + remoteJobInfos.size());
                 // clean unused build result
