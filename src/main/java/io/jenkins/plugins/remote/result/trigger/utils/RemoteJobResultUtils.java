@@ -32,19 +32,20 @@ import java.util.stream.Collectors;
  * @author HW
  */
 public class RemoteJobResultUtils {
+
     /**
-     * get remote job next build number
+     * get remote job last build number
      *
      * @param job     Jenkins job
      * @param jobInfo remote Job info
-     * @return 下一个版本
+     * @return 版本
      */
-    public static Integer requestNextBuildNumber(Item job, RemoteJobInfo jobInfo)
+    public static Integer requestLastBuildBuildNumber(Item job, RemoteJobInfo jobInfo)
             throws UnSuccessfulRequestStatusException, IOException {
-        String api = jobInfo.getRemoteJobUrl() + "/api/json";
-        SourceMap result = requestRemoteApi(job, jobInfo, api);
+        String api = jobInfo.getRemoteJobUrl() + "/lastBuild/buildNumber";
+        String result = requestRemoteApi(job, jobInfo, api);
         if (result != null) {
-            return result.integerValue("nextBuildNumber");
+            return Integer.valueOf(result);
         }
         return null;
     }
@@ -60,7 +61,7 @@ public class RemoteJobResultUtils {
     public static SourceMap requestBuildResult(Item job, RemoteJobInfo jobInfo, int number)
             throws UnSuccessfulRequestStatusException, IOException {
         String api = jobInfo.getRemoteJobUrl() + "/" + number + "/api/json";
-        return requestRemoteApi(job, jobInfo, api);
+        return requestRemoteJsonApi(job, jobInfo, api);
     }
 
     /**
@@ -248,7 +249,7 @@ public class RemoteJobResultUtils {
      * @param apiUrl  api url
      * @return api result
      */
-    private static SourceMap requestRemoteApi(Item job, RemoteJobInfo jobInfo, String apiUrl)
+    private static String requestRemoteApi(Item job, RemoteJobInfo jobInfo, String apiUrl)
             throws IOException, UnSuccessfulRequestStatusException {
         // OkHttp Client
         OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
@@ -263,7 +264,7 @@ public class RemoteJobResultUtils {
 
         // trustAllCertificates
         if (remoteServer.isTrustAllCertificates()) {
-            clientBuilder = clientBuilder
+            clientBuilder
                     .sslSocketFactory(SSLSocketManager.getSSLSocketFactory(),
                             (X509TrustManager) SSLSocketManager.getTrustManager()[0])
                     .hostnameVerifier(SSLSocketManager.getHostnameVerifier());
@@ -285,15 +286,32 @@ public class RemoteJobResultUtils {
             if (response.isSuccessful()) {
                 ResponseBody responseBody = response.body();
                 if (null != responseBody) {
-                    String body = responseBody.string();
-                    // json
-                    ObjectMapper mapper = new ObjectMapper();
-                    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-                    return SourceMap.of(mapper.readValue(body, Map.class));
+                    return responseBody.string();
                 }
             } else {
                 throw new UnSuccessfulRequestStatusException("Response UnSuccess Code:" + response.code() + ",Url:" + apiUrl, response.code(), apiUrl);
             }
+        }
+        return null;
+    }
+
+    /**
+     * do api request
+     *
+     * @param job     Jenkins job
+     * @param jobInfo remote Job info
+     * @param apiUrl  api url
+     * @return api result
+     */
+    private static SourceMap requestRemoteJsonApi(Item job, RemoteJobInfo jobInfo, String apiUrl)
+            throws IOException, UnSuccessfulRequestStatusException {
+        String body = requestRemoteApi(job, jobInfo, apiUrl);
+        if (body != null) {
+            // json
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            //noinspection unchecked
+            return SourceMap.of(mapper.readValue(body, Map.class));
         }
         return null;
     }

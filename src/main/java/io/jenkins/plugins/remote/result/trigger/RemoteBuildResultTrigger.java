@@ -91,13 +91,13 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                 for (RemoteJobInfo jobInfo : remoteJobInfos) {
                     log.info("================== " + jobInfo.getRemoteJobUrl() + " ==================");
                     // get next build number
-                    Integer nextBuildNumber = RemoteJobResultUtils.requestNextBuildNumber(job, jobInfo);
-                    if (nextBuildNumber != null) {
-                        log.info("Build number: " + (nextBuildNumber - 1));
+                    Integer lastBuildBuildNumber = RemoteJobResultUtils.requestLastBuildBuildNumber(job, jobInfo);
+                    if (lastBuildBuildNumber != null) {
+                        log.info("Build number: " + lastBuildBuildNumber);
                         int checkedNumber = RemoteJobResultUtils.getCheckedNumber(job, jobInfo);
                         log.info("Checked number: " + checkedNumber);
                         // checked remote build
-                        for (int number = nextBuildNumber - 1; number > checkedNumber; number--) {
+                        for (int number = lastBuildBuildNumber; number > checkedNumber; number--) {
                             SourceMap result = RemoteJobResultUtils.requestBuildResult(job, jobInfo, number);
                             if (result != null) {
                                 // 清理result,并提取resultJson
@@ -147,9 +147,6 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                             modified = true;
                                         }
 
-                                        // saved checked number
-                                        RemoteJobResultUtils.saveCheckedNumber(job, jobInfo, buildNumber);
-
                                         if (modified) {
                                             // changed
                                             log.info("Need trigger, remote build result: " + result.stringValue("result"));
@@ -169,6 +166,9 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                 throw new XTriggerException("Can't get remote build result, Server maybe deleted");
                             }
                         }
+
+                        // 完整一轮检查完成后，saved checked number
+                        RemoteJobResultUtils.saveCheckedNumber(job, jobInfo, lastBuildBuildNumber);
                     }
                 }
             } catch (IOException e) {
