@@ -69,7 +69,7 @@ public class ReadRemoteResultStep extends Step {
 
     public static class ReadRemoteResultStepExecution extends SynchronousNonBlockingStepExecution<Map<?, ?>> {
         private static final long serialVersionUID = 4436899316471397907L;
-        private transient ReadRemoteResultStep step;
+        private final transient ReadRemoteResultStep step;
 
         public ReadRemoteResultStepExecution(@NonNull ReadRemoteResultStep step, @NonNull StepContext context) {
             super(context);

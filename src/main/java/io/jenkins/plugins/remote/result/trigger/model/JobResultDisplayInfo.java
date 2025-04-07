@@ -3,7 +3,7 @@ package io.jenkins.plugins.remote.result.trigger.model;
 /**
  * @author heweisc@dingtalk.com
  */
-public class ActionSavedJobInfo {
+public class JobResultDisplayInfo {
     private String remoteJobUrl;
     private String result;
     private String resultJson;

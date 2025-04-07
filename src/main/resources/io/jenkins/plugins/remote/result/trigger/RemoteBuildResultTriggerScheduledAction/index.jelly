@@ -28,11 +28,11 @@ THE SOFTWARE.
     <l:layout title="Remote Result Trigger">
         <st:include it="${it.item}" page="sidepanel.jelly"/>
         <l:main-panel>
-            <j:if test="${!it.displaySavedJobInfos.isEmpty()}">
+            <j:if test="${!it.jobResultDisplayInfos.isEmpty()}">
                 <section class="jenkins-section">
                     <div class="jenkins-section__title">Triggered Info</div>
                     <div class="repeated-container">
-                        <j:forEach var="info" items="${it.displaySavedJobInfos}">
+                        <j:forEach var="info" items="${it.jobResultDisplayInfos}">
                             <div class="repeated-chunk">
                                 <div class="jenkins-form-item tr">
                                     <b>${info.remoteJobUrl}</b>

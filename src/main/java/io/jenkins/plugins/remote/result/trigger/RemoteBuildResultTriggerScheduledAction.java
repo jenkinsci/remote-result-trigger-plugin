@@ -6,7 +6,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Functions;
 import hudson.model.Action;
 import hudson.model.BuildableItem;
-import io.jenkins.plugins.remote.result.trigger.model.ActionSavedJobInfo;
+import io.jenkins.plugins.remote.result.trigger.model.JobResultDisplayInfo;
 import io.jenkins.plugins.remote.result.trigger.model.JobResultInfo;
 import org.kohsuke.stapler.export.ExportedBean;
 
@@ -36,11 +36,11 @@ public class RemoteBuildResultTriggerScheduledAction implements Action {
         return jobResultInfos;
     }
 
-    public List<ActionSavedJobInfo> getDisplaySavedJobInfos() throws IOException {
+    public List<JobResultDisplayInfo> getJobResultDisplayInfos() throws IOException {
         ObjectWriter jsonPretty = new ObjectMapper().writerWithDefaultPrettyPrinter();
-        List<ActionSavedJobInfo> results = new ArrayList<>();
+        List<JobResultDisplayInfo> results = new ArrayList<>();
         for (JobResultInfo jobResultInfo : jobResultInfos) {
-            ActionSavedJobInfo info = new ActionSavedJobInfo();
+            JobResultDisplayInfo info = new JobResultDisplayInfo();
             info.setRemoteJobUrl(jobResultInfo.getRemoteJobUrl());
             info.setBuildUrl(jobResultInfo.getBuildUrl());
             info.setResult(jsonPretty.writeValueAsString(jobResultInfo.getResult()));
