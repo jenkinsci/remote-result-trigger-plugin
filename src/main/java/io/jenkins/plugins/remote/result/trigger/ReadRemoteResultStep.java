@@ -95,7 +95,7 @@ public class ReadRemoteResultStep extends Step {
                             .findFirst().orElse(null);
                 }
                 if (jobInfo != null) {
-                    return jobInfo.getResultJson();
+                    return jobInfo.getRemoteResult();
                 }
             }
             return new HashMap<>();

@@ -41,9 +41,9 @@ public class RemoteBuildResultTriggerProjectAction implements Action {
             JobResultDisplayInfo info = new JobResultDisplayInfo();
             info.setRemoteJobUrl(jobResultInfo.getRemoteJobUrl());
             info.setBuildUrl(jobResultInfo.getBuildUrl());
-            info.setResult(jsonPretty.writeValueAsString(jobResultInfo.getResult()));
-            if (jobResultInfo.getResultJson() != null) {
-                info.setResultJson(jsonPretty.writeValueAsString(jobResultInfo.getResultJson()));
+            info.setResult(jsonPretty.writeValueAsString(jobResultInfo.getBuildResult()));
+            if (jobResultInfo.getRemoteResult() != null) {
+                info.setResultJson(jsonPretty.writeValueAsString(jobResultInfo.getRemoteResult()));
             }
             results.add(info);
         }

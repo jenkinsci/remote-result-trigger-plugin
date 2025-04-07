@@ -154,9 +154,10 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                             // changed
                                             log.info("Need trigger, remote build result: " + result.stringValue("result"));
                                             // save info
-                                            RemoteJobResultUtils.saveBuildInfo(job, jobInfo, result);
+                                            RemoteJobResultUtils.saveBuildResultInfo(job, jobInfo, result);
+                                            RemoteJobResultUtils.saveTriggeredNumber(job, jobInfo, buildNumber);
                                             if (resultJson != null) {
-                                                RemoteJobResultUtils.saveBuildResultJson(job, jobInfo, resultJson);
+                                                RemoteJobResultUtils.saveRemoteResultInfo(job, jobInfo, resultJson);
                                             }
                                             // 这个任务检查完成了，继续下一个任务检查
                                             break;

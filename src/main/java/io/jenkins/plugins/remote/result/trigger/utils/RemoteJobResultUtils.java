@@ -73,10 +73,8 @@ public class RemoteJobResultUtils {
     public static int getCheckedNumber(Item job, RemoteJobInfo jobInfo) throws IOException {
         JobResultInfo jobResultInfo = getSavedJobInfo(job, jobInfo);
         // 兼容老版本
-        if (jobResultInfo != null
-                && (jobResultInfo.getCheckedNumber() != null || jobResultInfo.getTriggerNumber() != null)) {
-            return jobResultInfo.getCheckedNumber() == null ?
-                    jobResultInfo.getTriggerNumber() : jobResultInfo.getCheckedNumber();
+        if (jobResultInfo != null && jobResultInfo.getCheckedNumber() != null) {
+            return jobResultInfo.getCheckedNumber();
         }
         return 0;
     }
@@ -86,7 +84,7 @@ public class RemoteJobResultUtils {
      *
      * @param job     Jenkins job
      * @param jobInfo remote Job info
-     * @param number  trigger number
+     * @param number  checked number
      */
     public static void saveCheckedNumber(BuildableItem job, RemoteJobInfo jobInfo, int number) throws IOException {
         JobResultInfo jobResultInfo = getSavedJobInfo(job, jobInfo);
@@ -96,43 +94,61 @@ public class RemoteJobResultUtils {
 
         jobResultInfo.setCheckedNumber(number);
 
-        saveBuildInfo(job, jobInfo, jobResultInfo);
+        saveBuildResultInfo(job, jobInfo, jobResultInfo);
+    }
+
+    /**
+     * save build trigger number
+     *
+     * @param job     Jenkins job
+     * @param jobInfo remote Job info
+     * @param number  trigger number
+     */
+    public static void saveTriggeredNumber(BuildableItem job, RemoteJobInfo jobInfo, int number) throws IOException {
+        JobResultInfo jobResultInfo = getSavedJobInfo(job, jobInfo);
+        if (jobResultInfo == null) {
+            jobResultInfo = new JobResultInfo();
+        }
+
+        jobResultInfo.setTriggeredNumber(number);
+
+        saveBuildResultInfo(job, jobInfo, jobResultInfo);
     }
 
     /**
      * save build result json
      *
-     * @param job        Jenkins job
-     * @param jobInfo    remote Job info
-     * @param resultJson result json
+     * @param job          Jenkins job
+     * @param jobInfo      remote Job info
+     * @param remoteResult result json
      */
-    public static void saveBuildResultJson(BuildableItem job, RemoteJobInfo jobInfo, SourceMap resultJson) throws IOException {
+    public static void saveRemoteResultInfo(BuildableItem job, RemoteJobInfo jobInfo, SourceMap remoteResult) throws IOException {
         JobResultInfo jobResultInfo = getSavedJobInfo(job, jobInfo);
         if (jobResultInfo == null) {
             jobResultInfo = new JobResultInfo();
         }
 
-        jobResultInfo.setResultJson(resultJson.getSource());
+        jobResultInfo.setRemoteResult(remoteResult.getSource());
 
-        saveBuildInfo(job, jobInfo, jobResultInfo);
+        saveBuildResultInfo(job, jobInfo, jobResultInfo);
     }
 
     /**
      * save build info
      *
-     * @param job          Jenkins job
-     * @param jobInfo      remote Job info
-     * @param remoteResult api result
+     * @param job         Jenkins job
+     * @param jobInfo     remote Job info
+     * @param buildResult api result
      */
-    public static void saveBuildInfo(BuildableItem job, RemoteJobInfo jobInfo, SourceMap remoteResult) throws IOException {
+    public static void saveBuildResultInfo(BuildableItem job, RemoteJobInfo jobInfo, SourceMap buildResult) throws IOException {
         JobResultInfo jobResultInfo = getSavedJobInfo(job, jobInfo);
         if (jobResultInfo == null) {
             jobResultInfo = new JobResultInfo();
         }
 
-        jobResultInfo.setResult(remoteResult.getSource());
+        jobResultInfo.setBuildResult(buildResult.getSource());
 
-        saveBuildInfo(job, jobInfo, jobResultInfo);
+        saveBuildResultInfo(job, jobInfo, jobResultInfo);
     }
 
     /**
@@ -169,11 +185,11 @@ public class RemoteJobResultUtils {
     /**
      * save build info to file
      *
-     * @param job          Jenkins job
-     * @param jobInfo      remote Job info
+     * @param job           Jenkins job
+     * @param jobInfo       remote Job info
      * @param jobResultInfo save info
      */
-    private static void saveBuildInfo(BuildableItem job, RemoteJobInfo jobInfo, JobResultInfo jobResultInfo) throws IOException {
+    private static void saveBuildResultInfo(BuildableItem job, RemoteJobInfo jobInfo, JobResultInfo jobResultInfo) throws IOException {
         // remote job info
         jobResultInfo.setRemoteServer(jobInfo.getRemoteServer());
         jobResultInfo.setRemoteJob(jobInfo.getId());
@@ -213,9 +229,7 @@ public class RemoteJobResultUtils {
                 envs.putAll(generateEnvs("REMOTE_", jobResultInfo));
             }
             // prefix with job id
-            String prefix = "REMOTE_" +
-                    (StringUtils.isNotEmpty(jobResultInfo.getUid()) ? jobResultInfo.getUid() : jobResultInfo.getRemoteJobName()) +
-                    "_";
+            String prefix = "REMOTE_" + jobResultInfo.getUid() + "_";
             envs.putAll(generateEnvs(prefix, jobResultInfo));
         }
         // jobs list
@@ -329,15 +343,15 @@ public class RemoteJobResultUtils {
     /**
      * Generate envs
      *
-     * @param prefix       prefix
+     * @param prefix        prefix
      * @param jobResultInfo saved info
      * @return envs
      */
     @SuppressWarnings({"rawtypes", "unchecked"})
     private static Map<String, String> generateEnvs(String prefix, JobResultInfo jobResultInfo) {
         Map<String, String> envs = new HashMap<>();
-        if (jobResultInfo.getResult() != null) {
-            SourceMap sourceMap = SourceMap.of(jobResultInfo.getResult());
+        if (jobResultInfo.getBuildResult() != null) {
+            SourceMap sourceMap = SourceMap.of(jobResultInfo.getBuildResult());
             // BUILD_NUMBER
             envs.put(prefix + "BUILD_NUMBER", sourceMap.stringValue("number"));
             // TIMESTAMP
@@ -369,7 +383,7 @@ public class RemoteJobResultUtils {
             }
 
             // result json
-            Map<String, Object> resultJson = jobResultInfo.getResultJson();
+            Map<String, Object> resultJson = jobResultInfo.getRemoteResult();
             if (resultJson != null) {
                 SourceMap map = SourceMap.of(resultJson);
                 for (String key : resultJson.keySet()) {
