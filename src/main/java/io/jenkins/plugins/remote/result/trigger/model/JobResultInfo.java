@@ -4,20 +4,18 @@ import java.util.Map;
 
 /**
  * Info
+ *
+ * @author heweisc@dingtalk.com
  */
-public class SavedJobInfo {
+public class JobResultInfo {
     private String remoteServer;
     private String remoteJob;
-    @Deprecated
-    private String remoteJobName;
     private String remoteJobUrl;
     private String uid;
-    @Deprecated
-    private Integer triggerNumber;
     private Integer triggeredNumber;
     private Integer checkedNumber;
-    private Map<String, Object> result;
-    private Map<String, Object> resultJson;
+    private Map<String, Object> buildResult;
+    private Map<String, Object> remoteResult;
 
     public String getRemoteServer() {
         return remoteServer;
@@ -35,23 +33,15 @@ public class SavedJobInfo {
         this.remoteJob = remoteJob;
     }
 
-    @Deprecated
-    public String getRemoteJobName() {
-        return remoteJobName;
-    }
-
-    @Deprecated
-    public void setRemoteJobName(String remoteJobName) {
-        this.remoteJobName = remoteJobName;
-    }
-
     public String getRemoteJobUrl() {
         return remoteJobUrl;
     }
 
     public String getBuildUrl() {
-        Object object = result.get("url");
-        return object != null ? object.toString() : null;
+        if (buildResult != null && buildResult.get("url") != null) {
+            return buildResult.get("url").toString();
+        }
+        return null;
     }
 
     public void setRemoteJobUrl(String remoteJobUrl) {
@@ -66,32 +56,35 @@ public class SavedJobInfo {
         this.uid = uid;
     }
 
-    @Deprecated
-    public Integer getTriggerNumber() {
-        return triggerNumber;
-    }
-
     public Integer getCheckedNumber() {
         return checkedNumber;
+    }
+
+    public Integer getTriggeredNumber() {
+        return triggeredNumber;
+    }
+
+    public void setTriggeredNumber(Integer triggeredNumber) {
+        this.triggeredNumber = triggeredNumber;
     }
 
     public void setCheckedNumber(Integer checkedNumber) {
         this.checkedNumber = checkedNumber;
     }
 
-    public Map<String, Object> getResult() {
-        return result;
+    public Map<String, Object> getBuildResult() {
+        return buildResult;
     }
 
-    public void setResult(Map<String, Object> result) {
-        this.result = result;
+    public void setBuildResult(Map<String, Object> buildResult) {
+        this.buildResult = buildResult;
     }
 
-    public Map<String, Object> getResultJson() {
-        return resultJson;
+    public Map<String, Object> getRemoteResult() {
+        return remoteResult;
     }
 
-    public void setResultJson(Map<String, Object> resultJson) {
-        this.resultJson = resultJson;
+    public void setRemoteResult(Map<String, Object> remoteResult) {
+        this.remoteResult = remoteResult;
     }
 }

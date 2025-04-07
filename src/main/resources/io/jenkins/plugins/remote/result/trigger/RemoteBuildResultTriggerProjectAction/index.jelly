@@ -43,11 +43,11 @@ THE SOFTWARE.
                     </j:otherwise>
                 </j:choose>
             </section>
-            <j:if test="${!it.savedJobInfos.isEmpty()}">
+            <j:if test="${!it.jobResultDisplayInfos.isEmpty()}">
                 <section class="jenkins-section">
                     <div class="jenkins-section__title">Last Triggered Info</div>
                     <div class="repeated-container">
-                        <j:forEach var="info" items="${it.savedJobInfos}">
+                        <j:forEach var="info" items="${it.jobResultDisplayInfos}">
                             <div class="repeated-chunk">
                                 <div class="jenkins-form-item tr">
                                     <b>${info.remoteJobUrl}</b>

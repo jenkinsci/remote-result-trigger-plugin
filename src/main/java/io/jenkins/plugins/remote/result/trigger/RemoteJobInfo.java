@@ -8,6 +8,7 @@ import hudson.util.ListBoxModel;
 import io.jenkins.plugins.remote.result.trigger.model.ResultCheck;
 import io.jenkins.plugins.remote.result.trigger.utils.RemoteJenkinsServerUtils;
 import jenkins.model.Jenkins;
+import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
@@ -19,6 +20,7 @@ import org.kohsuke.stapler.verb.POST;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Remote Job Configuration
@@ -110,7 +112,7 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
 
     @DataBoundSetter
     public void setUid(String uid) {
-        this.uid = uid;
+        this.uid = StringUtils.isEmpty(uid) ? RandomStringUtils.randomAlphabetic(32) : uid;
     }
 
     public List<String> getTriggerResults() {
@@ -188,6 +190,23 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
         public FormValidation doCheckRemoteJobUrl(@QueryParameter String remoteJobUrl) {
             if (StringUtils.isEmpty(remoteJobUrl)) {
                 return FormValidation.error("Please enter a remote job url");
+            }
+            return FormValidation.ok();
+        }
+
+        /**
+         * Validates the uid
+         *
+         * @param uid Unique Identifier
+         * @return FormValidation object
+         */
+        @POST
+        @Restricted(NoExternalUse.class)
+        public FormValidation doCheckUid(@QueryParameter String uid) {
+            if (StringUtils.isNotEmpty(uid)) {
+                if (!uid.matches("[a-zA-Z0-9_]*")){
+                    return FormValidation.error("Only support [a-zA-Z0-9_] characters");
+                }
             }
             return FormValidation.ok();
         }

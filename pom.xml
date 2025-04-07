@@ -17,7 +17,7 @@
     <url>https://github.com/jenkinsci/remote-result-trigger-plugin</url>
 
     <properties>
-        <revision>2</revision>
+        <revision>3</revision>
         <changelist>999999-SNAPSHOT</changelist>
         <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
         <jenkins.baseline>2.401</jenkins.baseline>
@@ -61,6 +61,10 @@
     </pluginRepositories>
 
     <dependencies>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins.workflow</groupId>
+            <artifactId>workflow-step-api</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>xtrigger-api</artifactId>

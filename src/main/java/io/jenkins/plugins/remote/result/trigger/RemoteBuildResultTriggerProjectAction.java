@@ -8,8 +8,8 @@ import hudson.Util;
 import hudson.console.AnnotatedLargeText;
 import hudson.model.Action;
 import hudson.model.BuildableItem;
-import io.jenkins.plugins.remote.result.trigger.model.ActionSavedJobInfo;
-import io.jenkins.plugins.remote.result.trigger.model.SavedJobInfo;
+import io.jenkins.plugins.remote.result.trigger.model.JobResultDisplayInfo;
+import io.jenkins.plugins.remote.result.trigger.model.JobResultInfo;
 import io.jenkins.plugins.remote.result.trigger.utils.RemoteJobResultUtils;
 import org.apache.commons.jelly.XMLOutput;
 
@@ -24,26 +24,26 @@ import java.util.List;
  *
  * @author HW
  */
-public class RemoteBuildResultTriggerAction implements Action {
+public class RemoteBuildResultTriggerProjectAction implements Action {
     private final BuildableItem job;
     private final File logFile;
 
-    public RemoteBuildResultTriggerAction(BuildableItem job, File logFile) {
+    public RemoteBuildResultTriggerProjectAction(BuildableItem job, File logFile) {
         this.job = job;
         this.logFile = logFile;
     }
 
-    public List<ActionSavedJobInfo> getSavedJobInfos() throws IOException {
+    public List<JobResultDisplayInfo> getJobResultDisplayInfos() throws IOException {
         ObjectWriter jsonPretty = new ObjectMapper().writerWithDefaultPrettyPrinter();
-        List<SavedJobInfo> savedJobInfos = RemoteJobResultUtils.getSavedJobInfos(job);
-        List<ActionSavedJobInfo> results = new ArrayList<>();
-        for (SavedJobInfo savedJobInfo : savedJobInfos) {
-            ActionSavedJobInfo info = new ActionSavedJobInfo();
-            info.setRemoteJobUrl(savedJobInfo.getRemoteJobUrl());
-            info.setBuildUrl(savedJobInfo.getBuildUrl());
-            info.setResult(jsonPretty.writeValueAsString(savedJobInfo.getResult()));
-            if (savedJobInfo.getResultJson() != null) {
-                info.setResultJson(jsonPretty.writeValueAsString(savedJobInfo.getResultJson()));
+        List<JobResultInfo> jobResultInfos = RemoteJobResultUtils.getSavedJobInfos(job);
+        List<JobResultDisplayInfo> results = new ArrayList<>();
+        for (JobResultInfo jobResultInfo : jobResultInfos) {
+            JobResultDisplayInfo info = new JobResultDisplayInfo();
+            info.setRemoteJobUrl(jobResultInfo.getRemoteJobUrl());
+            info.setBuildUrl(jobResultInfo.getBuildUrl());
+            info.setResult(jsonPretty.writeValueAsString(jobResultInfo.getBuildResult()));
+            if (jobResultInfo.getRemoteResult() != null) {
+                info.setResultJson(jsonPretty.writeValueAsString(jobResultInfo.getRemoteResult()));
             }
             results.add(info);
         }
@@ -121,7 +121,7 @@ public class RemoteBuildResultTriggerAction implements Action {
 
     @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED")
     public void writeLogTo(XMLOutput out) throws IOException {
-        new AnnotatedLargeText<RemoteBuildResultTriggerAction>(logFile, StandardCharsets.UTF_8, true, this).writeHtmlTo(0, out.asWriter());
+        new AnnotatedLargeText<RemoteBuildResultTriggerProjectAction>(logFile, StandardCharsets.UTF_8, true, this).writeHtmlTo(0, out.asWriter());
     }
 
     public String getLog() throws IOException {

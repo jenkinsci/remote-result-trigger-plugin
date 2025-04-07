@@ -5,14 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 import hudson.Extension;
 import hudson.model.Action;
 import hudson.model.Node;
 import hudson.util.CopyOnWriteList;
 import io.jenkins.plugins.remote.result.trigger.exceptions.UnSuccessfulRequestStatusException;
+import io.jenkins.plugins.remote.result.trigger.model.JobResultInfo;
 import io.jenkins.plugins.remote.result.trigger.model.ResultCheck;
-import io.jenkins.plugins.remote.result.trigger.model.SavedJobInfo;
 import io.jenkins.plugins.remote.result.trigger.utils.RemoteJobResultUtils;
 import io.jenkins.plugins.remote.result.trigger.utils.SourceMap;
 import jenkins.model.Jenkins;
@@ -72,11 +71,6 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
     }
 
     @Override
-    protected Action[] getScheduledActions(Node pollingNode, XTriggerLog log) {
-        return new Action[0];
-    }
-
-    @Override
     @SuppressFBWarnings(value = "NP_NULL_PARAM_DEREF")
     protected boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException {
         boolean modified = false;
@@ -88,9 +82,9 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
             try {
                 log.info("Job count: " + remoteJobInfos.size());
                 // clean unused build result
-                List<SavedJobInfo> removedJobs = RemoteJobResultUtils.cleanUnusedBuildInfo(job, remoteJobInfos);
+                List<JobResultInfo> removedJobs = RemoteJobResultUtils.cleanUnusedBuildInfo(job, remoteJobInfos);
                 if (!removedJobs.isEmpty()) {
-                    for (SavedJobInfo removedJob : removedJobs) {
+                    for (JobResultInfo removedJob : removedJobs) {
                         log.info("Removing unused job: " + removedJob.getRemoteJobUrl());
                     }
                 }
@@ -160,9 +154,10 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                             // changed
                                             log.info("Need trigger, remote build result: " + result.stringValue("result"));
                                             // save info
-                                            RemoteJobResultUtils.saveBuildInfo(job, jobInfo, result);
+                                            RemoteJobResultUtils.saveBuildResultInfo(job, jobInfo, result);
+                                            RemoteJobResultUtils.saveTriggeredNumber(job, jobInfo, buildNumber);
                                             if (resultJson != null) {
-                                                RemoteJobResultUtils.saveBuildResultJson(job, jobInfo, resultJson);
+                                                RemoteJobResultUtils.saveRemoteResultInfo(job, jobInfo, resultJson);
                                             }
                                             // 这个任务检查完成了，继续下一个任务检查
                                             break;
@@ -190,6 +185,21 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
         return modified;
     }
 
+    @Override
+    protected Action[] getScheduledActions(Node pollingNode, XTriggerLog log) {
+        if (job != null) {
+            try {
+                List<JobResultInfo> jobResultInfos = RemoteJobResultUtils.getSavedJobInfos(job);
+                return new Action[]{
+                        new RemoteBuildResultTriggerScheduledAction(job, jobResultInfos)
+                };
+            } catch (IOException e) {
+                // do nothing
+            }
+        }
+        return new Action[0];
+    }
+
     /**
      * {@link Action}s to be displayed in the job page.
      *
@@ -198,7 +208,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
      */
     @Override
     public Collection<? extends Action> getProjectActions() {
-        RemoteBuildResultTriggerAction action = new RemoteBuildResultTriggerAction(job, getLogFile());
+        RemoteBuildResultTriggerProjectAction action = new RemoteBuildResultTriggerProjectAction(job, getLogFile());
         return Collections.singleton(action);
     }
 
