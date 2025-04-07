@@ -175,7 +175,8 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                     }
                 }
             } catch (IOException e) {
-                throw new XTriggerException("Request last remote have a io exception", e);
+                // 这个发生概率太大，不要一直抛出到Jenkins管理，不然日志台上一堆异常
+                log.error("Request last remote have a io exception：" + e.getMessage());
             } catch (UnSuccessfulRequestStatusException e) {
                 // if status is 404, maybe didn't have a successful build
                 if (e.getStatus() != 404) {
