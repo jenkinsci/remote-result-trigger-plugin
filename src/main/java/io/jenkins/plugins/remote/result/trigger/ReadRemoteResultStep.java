@@ -4,7 +4,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Extension;
 import hudson.model.Run;
-import io.jenkins.plugins.remote.result.trigger.model.SavedJobInfo;
+import io.jenkins.plugins.remote.result.trigger.model.JobResultInfo;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.steps.*;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -84,13 +84,13 @@ public class ReadRemoteResultStep extends Step {
         @Override
         protected Map<?, ?> run() throws Exception {
             RemoteBuildResultTriggerScheduledAction action = getTriggerAction();
-            if (action != null && !action.getSavedJobInfos().isEmpty()) {
+            if (action != null && !action.getJobResultInfos().isEmpty()) {
                 // 读取任务信息
-                SavedJobInfo jobInfo;
+                JobResultInfo jobInfo;
                 if (StringUtils.isEmpty(step.getUid())) {
-                    jobInfo = action.getSavedJobInfos().get(0);
+                    jobInfo = action.getJobResultInfos().get(0);
                 } else {
-                    jobInfo = action.getSavedJobInfos().stream()
+                    jobInfo = action.getJobResultInfos().stream()
                             .filter(item -> step.getUid().equals(item.getUid()))
                             .findFirst().orElse(null);
                 }

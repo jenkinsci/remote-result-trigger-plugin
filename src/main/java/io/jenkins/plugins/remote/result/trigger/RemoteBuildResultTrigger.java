@@ -10,8 +10,8 @@ import hudson.model.Action;
 import hudson.model.Node;
 import hudson.util.CopyOnWriteList;
 import io.jenkins.plugins.remote.result.trigger.exceptions.UnSuccessfulRequestStatusException;
+import io.jenkins.plugins.remote.result.trigger.model.JobResultInfo;
 import io.jenkins.plugins.remote.result.trigger.model.ResultCheck;
-import io.jenkins.plugins.remote.result.trigger.model.SavedJobInfo;
 import io.jenkins.plugins.remote.result.trigger.utils.RemoteJobResultUtils;
 import io.jenkins.plugins.remote.result.trigger.utils.SourceMap;
 import jenkins.model.Jenkins;
@@ -82,9 +82,9 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
             try {
                 log.info("Job count: " + remoteJobInfos.size());
                 // clean unused build result
-                List<SavedJobInfo> removedJobs = RemoteJobResultUtils.cleanUnusedBuildInfo(job, remoteJobInfos);
+                List<JobResultInfo> removedJobs = RemoteJobResultUtils.cleanUnusedBuildInfo(job, remoteJobInfos);
                 if (!removedJobs.isEmpty()) {
-                    for (SavedJobInfo removedJob : removedJobs) {
+                    for (JobResultInfo removedJob : removedJobs) {
                         log.info("Removing unused job: " + removedJob.getRemoteJobUrl());
                     }
                 }
@@ -188,9 +188,9 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
     protected Action[] getScheduledActions(Node pollingNode, XTriggerLog log) {
         if (job != null) {
             try {
-                List<SavedJobInfo> savedJobInfos = RemoteJobResultUtils.getSavedJobInfos(job);
+                List<JobResultInfo> jobResultInfos = RemoteJobResultUtils.getSavedJobInfos(job);
                 return new Action[]{
-                        new RemoteBuildResultTriggerScheduledAction(job, savedJobInfos)
+                        new RemoteBuildResultTriggerScheduledAction(job, jobResultInfos)
                 };
             } catch (IOException e) {
                 // do nothing

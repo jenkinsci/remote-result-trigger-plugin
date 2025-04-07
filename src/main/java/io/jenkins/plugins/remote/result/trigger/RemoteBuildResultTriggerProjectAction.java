@@ -9,7 +9,7 @@ import hudson.console.AnnotatedLargeText;
 import hudson.model.Action;
 import hudson.model.BuildableItem;
 import io.jenkins.plugins.remote.result.trigger.model.ActionSavedJobInfo;
-import io.jenkins.plugins.remote.result.trigger.model.SavedJobInfo;
+import io.jenkins.plugins.remote.result.trigger.model.JobResultInfo;
 import io.jenkins.plugins.remote.result.trigger.utils.RemoteJobResultUtils;
 import org.apache.commons.jelly.XMLOutput;
 
@@ -35,15 +35,15 @@ public class RemoteBuildResultTriggerProjectAction implements Action {
 
     public List<ActionSavedJobInfo> getDisplaySavedJobInfos() throws IOException {
         ObjectWriter jsonPretty = new ObjectMapper().writerWithDefaultPrettyPrinter();
-        List<SavedJobInfo> savedJobInfos = RemoteJobResultUtils.getSavedJobInfos(job);
+        List<JobResultInfo> jobResultInfos = RemoteJobResultUtils.getSavedJobInfos(job);
         List<ActionSavedJobInfo> results = new ArrayList<>();
-        for (SavedJobInfo savedJobInfo : savedJobInfos) {
+        for (JobResultInfo jobResultInfo : jobResultInfos) {
             ActionSavedJobInfo info = new ActionSavedJobInfo();
-            info.setRemoteJobUrl(savedJobInfo.getRemoteJobUrl());
-            info.setBuildUrl(savedJobInfo.getBuildUrl());
-            info.setResult(jsonPretty.writeValueAsString(savedJobInfo.getResult()));
-            if (savedJobInfo.getResultJson() != null) {
-                info.setResultJson(jsonPretty.writeValueAsString(savedJobInfo.getResultJson()));
+            info.setRemoteJobUrl(jobResultInfo.getRemoteJobUrl());
+            info.setBuildUrl(jobResultInfo.getBuildUrl());
+            info.setResult(jsonPretty.writeValueAsString(jobResultInfo.getResult()));
+            if (jobResultInfo.getResultJson() != null) {
+                info.setResultJson(jsonPretty.writeValueAsString(jobResultInfo.getResultJson()));
             }
             results.add(info);
         }

@@ -7,7 +7,7 @@ import hudson.Functions;
 import hudson.model.Action;
 import hudson.model.BuildableItem;
 import io.jenkins.plugins.remote.result.trigger.model.ActionSavedJobInfo;
-import io.jenkins.plugins.remote.result.trigger.model.SavedJobInfo;
+import io.jenkins.plugins.remote.result.trigger.model.JobResultInfo;
 import org.kohsuke.stapler.export.ExportedBean;
 
 import java.io.IOException;
@@ -20,11 +20,11 @@ import java.util.List;
 @ExportedBean
 public class RemoteBuildResultTriggerScheduledAction implements Action {
     private final transient BuildableItem item;
-    private final List<SavedJobInfo> savedJobInfos;
+    private final List<JobResultInfo> jobResultInfos;
 
-    public RemoteBuildResultTriggerScheduledAction(BuildableItem item, List<SavedJobInfo> savedJobInfos) {
+    public RemoteBuildResultTriggerScheduledAction(BuildableItem item, List<JobResultInfo> jobResultInfos) {
         this.item = item;
-        this.savedJobInfos = savedJobInfos;
+        this.jobResultInfos = jobResultInfos;
     }
 
     public BuildableItem getItem() {
@@ -32,20 +32,20 @@ public class RemoteBuildResultTriggerScheduledAction implements Action {
     }
 
     @NonNull
-    public List<SavedJobInfo> getSavedJobInfos() {
-        return savedJobInfos;
+    public List<JobResultInfo> getJobResultInfos() {
+        return jobResultInfos;
     }
 
     public List<ActionSavedJobInfo> getDisplaySavedJobInfos() throws IOException {
         ObjectWriter jsonPretty = new ObjectMapper().writerWithDefaultPrettyPrinter();
         List<ActionSavedJobInfo> results = new ArrayList<>();
-        for (SavedJobInfo savedJobInfo : savedJobInfos) {
+        for (JobResultInfo jobResultInfo : jobResultInfos) {
             ActionSavedJobInfo info = new ActionSavedJobInfo();
-            info.setRemoteJobUrl(savedJobInfo.getRemoteJobUrl());
-            info.setBuildUrl(savedJobInfo.getBuildUrl());
-            info.setResult(jsonPretty.writeValueAsString(savedJobInfo.getResult()));
-            if (savedJobInfo.getResultJson() != null) {
-                info.setResultJson(jsonPretty.writeValueAsString(savedJobInfo.getResultJson()));
+            info.setRemoteJobUrl(jobResultInfo.getRemoteJobUrl());
+            info.setBuildUrl(jobResultInfo.getBuildUrl());
+            info.setResult(jsonPretty.writeValueAsString(jobResultInfo.getResult()));
+            if (jobResultInfo.getResultJson() != null) {
+                info.setResultJson(jsonPretty.writeValueAsString(jobResultInfo.getResultJson()));
             }
             results.add(info);
         }

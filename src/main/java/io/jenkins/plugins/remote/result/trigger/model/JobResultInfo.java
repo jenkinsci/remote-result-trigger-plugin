@@ -7,7 +7,7 @@ import java.util.Map;
  *
  * @author heweisc@dingtalk.com
  */
-public class SavedJobInfo {
+public class JobResultInfo {
     private String remoteServer;
     private String remoteJob;
     @Deprecated
