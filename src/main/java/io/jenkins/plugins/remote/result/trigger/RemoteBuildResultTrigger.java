@@ -83,12 +83,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
             try {
                 log.info("Job count: " + remoteJobInfos.size());
                 // clean unused build result
-                List<JobResultInfo> removedJobs = RemoteJobResultUtils.cleanUnusedBuildInfo(job, remoteJobInfos);
-                if (!removedJobs.isEmpty()) {
-                    for (JobResultInfo removedJob : removedJobs) {
-                        log.info("Removing unused job: " + removedJob.getRemoteJobUrl());
-                    }
-                }
+                RemoteJobResultUtils.cleanUnusedBuildInfo(job, remoteJobInfos);
                 for (RemoteJobInfo jobInfo : remoteJobInfos) {
                     log.info("================== " + jobInfo.getRemoteJobUrl() + " ==================");
                     // get next build number

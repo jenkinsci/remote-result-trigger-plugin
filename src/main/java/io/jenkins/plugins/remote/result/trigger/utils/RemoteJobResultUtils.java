@@ -172,28 +172,24 @@ public class RemoteJobResultUtils {
      * @param remoteJobInfos remote Job infos
      */
     @NonNull
-    public static List<JobResultInfo> cleanUnusedBuildInfo(BuildableItem job, List<RemoteJobInfo> remoteJobInfos) throws IOException {
-        List<JobResultInfo> removed = new ArrayList<>();
-        if (remoteJobInfos != null) {
-            List<JobResultInfo> jobResultInfos = getSavedJobInfos(job);
-            jobResultInfos.removeIf(savedJobInfo -> {
-                boolean match = remoteJobInfos.stream().noneMatch(
+    public static void cleanUnusedBuildInfo(BuildableItem job, List<RemoteJobInfo> remoteJobInfos) {
+        try {
+            if (remoteJobInfos != null) {
+                List<JobResultInfo> jobResultInfos = getSavedJobInfos(job);
+                jobResultInfos.removeIf(savedJobInfo -> remoteJobInfos.stream().noneMatch(
                         remoteJobInfo -> remoteJobInfo.getId().equals(savedJobInfo.getRemoteJob())
-                );
-                if (match) {
-                    removed.add(savedJobInfo);
+                ));
+                // save to file
+                File file = getRemoteResultConfigFile(job);
+                if (!file.getParentFile().exists()) {
+                    FileUtils.forceMkdirParent(file);
                 }
-                return match;
-            });
-            // save to file
-            File file = getRemoteResultConfigFile(job);
-            if (!file.getParentFile().exists()) {
-                FileUtils.forceMkdirParent(file);
+                String string = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(jobResultInfos);
+                FileUtils.writeStringToFile(file, string, StandardCharsets.UTF_8);
             }
-            String string = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(jobResultInfos);
-            FileUtils.writeStringToFile(file, string, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            // do nothing
         }
-        return removed;
     }
 
     /**
