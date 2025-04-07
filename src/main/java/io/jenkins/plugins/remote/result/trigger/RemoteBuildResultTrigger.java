@@ -7,6 +7,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.Action;
+import hudson.model.Item;
 import hudson.model.Node;
 import hudson.util.CopyOnWriteList;
 import io.jenkins.plugins.remote.result.trigger.exceptions.UnSuccessfulRequestStatusException;
@@ -96,8 +97,10 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                         log.info("Build number: " + lastBuildBuildNumber);
                         int checkedNumber = RemoteJobResultUtils.getCheckedNumber(job, jobInfo);
                         log.info("Checked number: " + checkedNumber);
+                        int minBuildNumber = getMinBuildNumber(job, jobInfo, checkedNumber);
+                        log.info("Min request number: " + minBuildNumber);
                         // checked remote build
-                        for (int number = lastBuildBuildNumber; number > checkedNumber; number--) {
+                        for (int number = lastBuildBuildNumber; number > minBuildNumber; number--) {
                             SourceMap result = RemoteJobResultUtils.requestBuildResult(job, jobInfo, number);
                             if (result != null) {
                                 // 清理result,并提取resultJson
@@ -224,6 +227,21 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
 
     public List<RemoteJobInfo> getRemoteJobInfos() {
         return remoteJobInfos;
+    }
+
+    private Integer getMinBuildNumber(Item job, RemoteJobInfo jobInfo, int checkedNumber)
+            throws UnSuccessfulRequestStatusException, IOException {
+        SourceMap info = RemoteJobResultUtils.requestJobInfo(job, jobInfo);
+        if (info != null) {
+            SourceMap firstBuild = info.sourceMap("firstBuild");
+            if (firstBuild != null) {
+                Integer number = firstBuild.integerValue("number");
+                if (number != null) {
+                    return Math.max(checkedNumber, number);
+                }
+            }
+        }
+        return checkedNumber;
     }
 
     /**
