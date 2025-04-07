@@ -7,6 +7,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.Action;
+import hudson.model.Item;
 import hudson.model.Node;
 import hudson.util.CopyOnWriteList;
 import io.jenkins.plugins.remote.result.trigger.exceptions.UnSuccessfulRequestStatusException;
@@ -91,13 +92,15 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                 for (RemoteJobInfo jobInfo : remoteJobInfos) {
                     log.info("================== " + jobInfo.getRemoteJobUrl() + " ==================");
                     // get next build number
-                    Integer nextBuildNumber = RemoteJobResultUtils.requestNextBuildNumber(job, jobInfo);
-                    if (nextBuildNumber != null) {
-                        log.info("Build number: " + (nextBuildNumber - 1));
+                    Integer lastBuildBuildNumber = RemoteJobResultUtils.requestLastBuildBuildNumber(job, jobInfo);
+                    if (lastBuildBuildNumber != null) {
+                        log.info("Build number: " + lastBuildBuildNumber);
                         int checkedNumber = RemoteJobResultUtils.getCheckedNumber(job, jobInfo);
                         log.info("Checked number: " + checkedNumber);
+                        int minBuildNumber = getMinBuildNumber(job, jobInfo, checkedNumber);
+                        log.info("Min request number: " + minBuildNumber);
                         // checked remote build
-                        for (int number = nextBuildNumber - 1; number > checkedNumber; number--) {
+                        for (int number = lastBuildBuildNumber; number > minBuildNumber; number--) {
                             SourceMap result = RemoteJobResultUtils.requestBuildResult(job, jobInfo, number);
                             if (result != null) {
                                 // 清理result,并提取resultJson
@@ -147,9 +150,6 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                             modified = true;
                                         }
 
-                                        // saved checked number
-                                        RemoteJobResultUtils.saveCheckedNumber(job, jobInfo, buildNumber);
-
                                         if (modified) {
                                             // changed
                                             log.info("Need trigger, remote build result: " + result.stringValue("result"));
@@ -169,10 +169,14 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                 throw new XTriggerException("Can't get remote build result, Server maybe deleted");
                             }
                         }
+
+                        // 完整一轮检查完成后，saved checked number
+                        RemoteJobResultUtils.saveCheckedNumber(job, jobInfo, lastBuildBuildNumber);
                     }
                 }
             } catch (IOException e) {
-                throw new XTriggerException("Request last remote have a io exception", e);
+                // 这个发生概率太大，不要一直抛出到Jenkins管理，不然日志台上一堆异常
+                log.error("Request last remote have a io exception：" + e.getMessage());
             } catch (UnSuccessfulRequestStatusException e) {
                 // if status is 404, maybe didn't have a successful build
                 if (e.getStatus() != 404) {
@@ -224,6 +228,21 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
 
     public List<RemoteJobInfo> getRemoteJobInfos() {
         return remoteJobInfos;
+    }
+
+    private Integer getMinBuildNumber(Item job, RemoteJobInfo jobInfo, int checkedNumber)
+            throws UnSuccessfulRequestStatusException, IOException {
+        SourceMap info = RemoteJobResultUtils.requestJobInfo(job, jobInfo);
+        if (info != null) {
+            SourceMap firstBuild = info.sourceMap("firstBuild");
+            if (firstBuild != null) {
+                Integer number = firstBuild.integerValue("number");
+                if (number != null) {
+                    return Math.max(checkedNumber, number);
+                }
+            }
+        }
+        return checkedNumber;
     }
 
     /**
