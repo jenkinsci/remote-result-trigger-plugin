@@ -80,11 +80,11 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
         if (job == null) {
             return false;
         } else if (CollectionUtils.isNotEmpty(remoteJobInfos)) {
-            try {
-                log.info("Job count: " + remoteJobInfos.size());
-                // clean unused build result
-                RemoteJobResultUtils.cleanUnusedBuildInfo(job, remoteJobInfos);
-                for (RemoteJobInfo jobInfo : remoteJobInfos) {
+            log.info("Job count: " + remoteJobInfos.size());
+            // clean unused build result
+            RemoteJobResultUtils.cleanUnusedBuildInfo(job, remoteJobInfos);
+            for (RemoteJobInfo jobInfo : remoteJobInfos) {
+                try {
                     log.info("================== " + jobInfo.getRemoteJobUrl() + " ==================");
                     // get next build number
                     Integer lastBuildBuildNumber = RemoteJobResultUtils.requestLastBuildBuildNumber(job, jobInfo);
@@ -168,14 +168,14 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                         // 完整一轮检查完成后，saved checked number
                         RemoteJobResultUtils.saveCheckedNumber(job, jobInfo, lastBuildBuildNumber);
                     }
-                }
-            } catch (IOException e) {
-                // 这个发生概率太大，不要一直抛出到Jenkins管理，不然日志台上一堆异常
-                log.error("Request last remote have a io exception：" + e.getMessage());
-            } catch (UnSuccessfulRequestStatusException e) {
-                // if status is 404, maybe didn't have a successful build
-                if (e.getStatus() != 404) {
-                    throw new XTriggerException("Request last remote successful job fail", e);
+                } catch (IOException e) {
+                    // 这个发生概率太大，不要一直抛出到Jenkins管理，不然日志台上一堆异常
+                    log.error("Request last remote have a io exception：" + e.getMessage());
+                } catch (UnSuccessfulRequestStatusException e) {
+                    // if status is 404, maybe didn't have a successful build
+                    if (e.getStatus() != 404) {
+                        throw new XTriggerException("Request last remote successful job fail", e);
+                    }
                 }
             }
         } else {
