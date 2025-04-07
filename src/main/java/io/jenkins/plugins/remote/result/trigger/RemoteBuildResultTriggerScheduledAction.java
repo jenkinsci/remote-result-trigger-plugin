@@ -2,6 +2,7 @@ package io.jenkins.plugins.remote.result.trigger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Functions;
 import hudson.model.Action;
 import hudson.model.BuildableItem;
@@ -28,6 +29,11 @@ public class RemoteBuildResultTriggerScheduledAction implements Action {
 
     public BuildableItem getItem() {
         return item;
+    }
+
+    @NonNull
+    public List<SavedJobInfo> getSavedJobInfos() {
+        return savedJobInfos;
     }
 
     public List<ActionSavedJobInfo> getDisplaySavedJobInfos() throws IOException {
