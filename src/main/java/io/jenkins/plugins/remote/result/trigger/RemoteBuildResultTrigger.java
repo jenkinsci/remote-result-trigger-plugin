@@ -233,7 +233,8 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
             if (firstBuild != null) {
                 Integer number = firstBuild.integerValue("number");
                 if (number != null) {
-                    return Math.max(checkedNumber, number);
+                    // Number必须-1，因为后续for循环是左开
+                    return Math.max(checkedNumber, number - 1);
                 }
             }
         }
