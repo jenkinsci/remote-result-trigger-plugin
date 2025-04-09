@@ -10,6 +10,7 @@ import hudson.model.Action;
 import hudson.model.Item;
 import hudson.model.Node;
 import hudson.util.CopyOnWriteList;
+import io.jenkins.plugins.remote.result.trigger.exceptions.RemoteJobInBuildingException;
 import io.jenkins.plugins.remote.result.trigger.exceptions.UnSuccessfulRequestStatusException;
 import io.jenkins.plugins.remote.result.trigger.model.JobResultInfo;
 import io.jenkins.plugins.remote.result.trigger.model.ResultCheck;
@@ -158,6 +159,9 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                             break;
                                         }
                                     }
+                                } else {
+                                    // 如果当前任务正在构建中，跳过这个任务
+                                    throw new RemoteJobInBuildingException("Job is in building, skip checking:" + result.stringValue("url"));
                                 }
                             } else {
                                 // remote server has been deleted
@@ -168,6 +172,9 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                         // 完整一轮检查完成后，saved checked number
                         RemoteJobResultUtils.saveCheckedNumber(job, jobInfo, lastBuildBuildNumber);
                     }
+                } catch (RemoteJobInBuildingException e) {
+                    // 任务正在构建，跳出检查
+                    log.error(e.getMessage());
                 } catch (IOException e) {
                     // 这个发生概率太大，不要一直抛出到Jenkins管理，不然日志台上一堆异常
                     log.error("Request last remote have a io exception：" + e.getMessage());
