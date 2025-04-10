@@ -20,7 +20,6 @@ import org.kohsuke.stapler.verb.POST;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Remote Job Configuration

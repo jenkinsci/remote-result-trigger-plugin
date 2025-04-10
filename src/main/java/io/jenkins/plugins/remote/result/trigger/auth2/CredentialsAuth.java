@@ -118,7 +118,7 @@ public class CredentialsAuth extends Auth2 {
      * @throws CredentialsNotFoundException if not found
      */
     private UsernamePasswordCredentials _getCredentials(Item item) throws CredentialsNotFoundException {
-        List<StandardUsernameCredentials> listOfCredentials = CredentialsProvider.lookupCredentials(
+        List<StandardUsernameCredentials> listOfCredentials = CredentialsProvider.lookupCredentialsInItem(
                 StandardUsernameCredentials.class, item, null, Collections.emptyList());
 
         return (UsernamePasswordCredentials) _findCredential(credentialsId, listOfCredentials);
@@ -152,7 +152,7 @@ public class CredentialsAuth extends Auth2 {
                                                             @QueryParameter String credentialsId) {
             StandardUsernameListBoxModel result = new StandardUsernameListBoxModel();
 
-            List<StandardUsernameCredentials> credentials = CredentialsProvider.lookupCredentials(
+            List<StandardUsernameCredentials> credentials = CredentialsProvider.lookupCredentialsInItem(
                     StandardUsernameCredentials.class,
                     item,
                     null,
