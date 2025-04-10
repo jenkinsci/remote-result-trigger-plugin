@@ -1,19 +1,17 @@
 package io.jenkins.plugins.remote.result.trigger.auth2;
 
 import hudson.util.Secret;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class Auth2Test {
-
-    @Rule
-    public JenkinsRule jenkinsRule = new JenkinsRule();
+@WithJenkins
+class Auth2Test {
 
     @Test
-    public void testCredentialsAuthCloneBehaviour() throws CloneNotSupportedException {
+    void testCredentialsAuthCloneBehaviour(JenkinsRule jenkinsRule) throws Exception {
         CredentialsAuth original = new CredentialsAuth();
         original.setCredentialsId("original");
         CredentialsAuth clone = (CredentialsAuth) original.clone();
@@ -27,7 +25,7 @@ public class Auth2Test {
     }
 
     @Test
-    public void testTokenAuthCloneBehaviour() throws CloneNotSupportedException {
+    void testTokenAuthCloneBehaviour(JenkinsRule jenkinsRule) throws Exception {
         TokenAuth original = new TokenAuth();
         original.setApiToken(Secret.fromString("original"));
         original.setUserName("original");
@@ -45,30 +43,30 @@ public class Auth2Test {
     }
 
     @Test
-    public void testNoneAuthCloneBehaviour() throws CloneNotSupportedException {
+    void testNoneAuthCloneBehaviour(JenkinsRule jenkinsRule) throws Exception {
         NoneAuth original = NoneAuth.INSTANCE;
         NoneAuth clone = (NoneAuth) original.clone();
         verifyEqualsHashCode(original, clone);
     }
 
     @Test
-    public void testNoneAuthEqualsWithNull() {
+    void testNoneAuthEqualsWithNull(JenkinsRule jenkinsRule) {
         NoneAuth original = new NoneAuth();
-        assertNotEquals(original, null);
+        assertNotEquals(null, original);
     }
 
-    private void verifyEqualsHashCode(Auth2 original, Auth2 clone) throws CloneNotSupportedException {
+    private void verifyEqualsHashCode(Auth2 original, Auth2 clone) {
         verifyEqualsHashCode(original, clone, true);
     }
 
-    private void verifyEqualsHashCode(Auth2 original, Auth2 clone, boolean expectToBeSame) throws CloneNotSupportedException {
-        assertNotEquals("Still same object after clone", System.identityHashCode(original), System.identityHashCode(clone));
+    private void verifyEqualsHashCode(Auth2 original, Auth2 clone, boolean expectToBeSame) {
+        assertNotEquals(System.identityHashCode(original), System.identityHashCode(clone), "Still same object after clone");
         if (expectToBeSame) {
-            assertTrue("clone not equals() original", clone.equals(original));
-            assertEquals("clone has different hashCode() than original", original.hashCode(), clone.hashCode());
+            assertEquals(clone, original, "clone not equals() original");
+            assertEquals(original.hashCode(), clone.hashCode(), "clone has different hashCode() than original");
         } else {
-            assertFalse("clone still equals() original", clone.equals(original));
-            assertNotEquals("clone still has same hashCode() than original", original.hashCode(), clone.hashCode());
+            assertNotEquals(clone, original, "clone still equals() original");
+            assertNotEquals(original.hashCode(), clone.hashCode(), "clone still has same hashCode() than original");
         }
     }
 }
