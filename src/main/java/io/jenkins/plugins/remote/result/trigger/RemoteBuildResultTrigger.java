@@ -45,11 +45,9 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
     @DataBoundConstructor
     public RemoteBuildResultTrigger(String cronTabSpec, List<RemoteJobInfo> remoteJobInfos) {
         super(cronTabSpec);
-        // add id
-        if (remoteJobInfos != null) {
-            for (RemoteJobInfo jobInfo : remoteJobInfos) {
-                jobInfo.setId(UUID.randomUUID().toString());
-            }
+        // 设置保存前统一更新下RemoteJobInfo的ID信息
+        for (RemoteJobInfo info : remoteJobInfos) {
+            info.updateId();
         }
         this.remoteJobInfos = remoteJobInfos;
     }
