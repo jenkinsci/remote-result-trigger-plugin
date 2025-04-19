@@ -25,7 +25,7 @@ import org.jenkinsci.plugins.xtriggerapi.XTriggerDescriptor;
 import org.jenkinsci.plugins.xtriggerapi.XTriggerException;
 import org.jenkinsci.plugins.xtriggerapi.XTriggerLog;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 
 import java.io.File;
 import java.io.IOException;
@@ -332,14 +332,14 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
          * <p>
          * Can be overridden to store descriptor-specific information.
          *
-         * @param req  StaplerRequest
+         * @param req  StaplerRequest2
          * @param json The JSON object that captures the configuration data for this {@link hudson.model.Descriptor}.
          *             See <a href="https://www.jenkins.io/doc/developer/forms/structured-form-submission/">the developer documentation</a>.
          * @return false
          * to keep the client in the same config page.
          */
         @Override
-        public boolean configure(StaplerRequest req, JSONObject json) throws FormException {
+        public boolean configure(StaplerRequest2 req, JSONObject json) throws FormException {
             // To persist global configuration information,
             // set that to properties and call save().
             List<RemoteJenkinsServer> servers = req.bindJSONToList(RemoteJenkinsServer.class, json.get("remoteJenkinsServers"));
