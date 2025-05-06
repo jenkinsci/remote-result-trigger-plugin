@@ -11,6 +11,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -68,6 +69,7 @@ public class ReadRemoteResultStep extends Step {
 
 
     public static class ReadRemoteResultStepExecution extends SynchronousNonBlockingStepExecution<Map<?, ?>> {
+        @Serial
         private static final long serialVersionUID = 4436899316471397907L;
         private final transient ReadRemoteResultStep step;
 
