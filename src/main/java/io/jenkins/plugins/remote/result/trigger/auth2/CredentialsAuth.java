@@ -19,6 +19,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
 
+import java.io.Serial;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
@@ -28,6 +29,7 @@ import java.util.List;
  */
 public class CredentialsAuth extends Auth2 {
 
+    @Serial
     private static final long serialVersionUID = -2650007108928532552L;
 
     @Extension

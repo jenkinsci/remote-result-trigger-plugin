@@ -7,6 +7,7 @@ import hudson.model.Item;
 import io.jenkins.plugins.remote.result.trigger.exceptions.CredentialsNotFoundException;
 import jenkins.model.Jenkins;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -14,6 +15,7 @@ import java.io.Serializable;
  */
 public abstract class Auth2 extends AbstractDescribableImpl<Auth2> implements Serializable, Cloneable {
 
+    @Serial
     private static final long serialVersionUID = -3217381962636283564L;
 
     private static final DescriptorExtensionList<Auth2, Auth2Descriptor> ALL = DescriptorExtensionList

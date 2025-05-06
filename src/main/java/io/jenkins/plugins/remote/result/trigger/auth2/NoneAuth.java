@@ -7,11 +7,14 @@ import hudson.model.Item;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import java.io.Serial;
+
 /**
  * @author HW
  */
 public class NoneAuth extends Auth2 {
 
+    @Serial
     private static final long serialVersionUID = -3128995428538415113L;
 
     @Extension

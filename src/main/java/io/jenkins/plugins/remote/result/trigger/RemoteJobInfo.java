@@ -19,6 +19,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +30,7 @@ import java.util.List;
  * @author HW
  */
 public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
+    @Serial
     private static final long serialVersionUID = -7232627326475916056L;
     /**
      * All job build results

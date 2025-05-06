@@ -1,9 +1,12 @@
 package io.jenkins.plugins.remote.result.trigger.exceptions;
 
+import java.io.Serial;
+
 /**
  * @author heweisc@dingtalk.com
  */
 public class RemoteJobInBuildingException extends Exception {
+    @Serial
     private static final long serialVersionUID = -4416311109922437403L;
 
     /**

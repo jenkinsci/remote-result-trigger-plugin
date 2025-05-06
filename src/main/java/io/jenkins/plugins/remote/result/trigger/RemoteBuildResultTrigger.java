@@ -29,6 +29,7 @@ import org.kohsuke.stapler.StaplerRequest2;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -39,6 +40,7 @@ import java.util.regex.Pattern;
  * @author HW
  */
 public class RemoteBuildResultTrigger extends AbstractTrigger implements Serializable {
+    @Serial
     private static final long serialVersionUID = -4059001060991775146L;
     private final List<RemoteJobInfo> remoteJobInfos;
 
