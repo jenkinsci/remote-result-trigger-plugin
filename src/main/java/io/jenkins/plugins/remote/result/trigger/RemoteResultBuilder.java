@@ -21,6 +21,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Map;
 
@@ -28,6 +29,7 @@ import java.util.Map;
  * @author heweisc@dingtalk.com
  */
 public class RemoteResultBuilder extends Builder implements SimpleBuildStep, Serializable {
+    @Serial
     private static final long serialVersionUID = -1800772775254484836L;
     private String result;
 

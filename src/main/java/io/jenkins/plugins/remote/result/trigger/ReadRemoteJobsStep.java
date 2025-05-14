@@ -9,6 +9,7 @@ import org.jenkinsci.plugins.workflow.steps.*;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.util.*;
 
 /**
@@ -53,6 +54,7 @@ public class ReadRemoteJobsStep extends Step {
 
 
     public static class ReadRemoteJobsStepExecution extends SynchronousNonBlockingStepExecution<List<Map<?, ?>>> {
+        @Serial
         private static final long serialVersionUID = 4436899316471397907L;
 
         public ReadRemoteJobsStepExecution(@NonNull StepContext context) {

@@ -1,11 +1,13 @@
 package io.jenkins.plugins.remote.result.trigger.exceptions;
 
 import java.io.IOException;
+import java.io.Serial;
 
 /**
  * @author heweisc@dingtalk.com
  */
 public class JsonNotMatchException extends IOException {
+    @Serial
     private static final long serialVersionUID = -6097935366992936039L;
 
     /**

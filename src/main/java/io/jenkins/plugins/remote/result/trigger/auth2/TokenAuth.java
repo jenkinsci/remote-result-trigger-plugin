@@ -11,6 +11,7 @@ import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
+import java.io.Serial;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -18,6 +19,7 @@ import java.nio.charset.StandardCharsets;
  */
 public class TokenAuth extends Auth2 {
 
+    @Serial
     private static final long serialVersionUID = 7912089565969112023L;
 
     @Extension

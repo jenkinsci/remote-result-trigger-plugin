@@ -29,6 +29,7 @@ import org.kohsuke.stapler.StaplerRequest2;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -39,17 +40,16 @@ import java.util.regex.Pattern;
  * @author HW
  */
 public class RemoteBuildResultTrigger extends AbstractTrigger implements Serializable {
+    @Serial
     private static final long serialVersionUID = -4059001060991775146L;
     private final List<RemoteJobInfo> remoteJobInfos;
 
     @DataBoundConstructor
     public RemoteBuildResultTrigger(String cronTabSpec, List<RemoteJobInfo> remoteJobInfos) {
         super(cronTabSpec);
-        // add id
-        if (remoteJobInfos != null) {
-            for (RemoteJobInfo jobInfo : remoteJobInfos) {
-                jobInfo.setId(UUID.randomUUID().toString());
-            }
+        // 设置保存前统一更新下RemoteJobInfo的ID信息
+        for (RemoteJobInfo info : remoteJobInfos) {
+            info.updateId();
         }
         this.remoteJobInfos = remoteJobInfos;
     }

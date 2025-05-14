@@ -15,6 +15,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.net.URL;
 import java.util.List;
@@ -26,6 +27,7 @@ import java.util.List;
  */
 public class RemoteJenkinsServer implements Describable<RemoteJenkinsServer>, Serializable {
 
+    @Serial
     private static final long serialVersionUID = -9211781849078964416L;
 
     /**

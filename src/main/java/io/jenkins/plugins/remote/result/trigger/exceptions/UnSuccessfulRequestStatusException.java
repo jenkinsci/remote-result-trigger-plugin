@@ -1,11 +1,14 @@
 package io.jenkins.plugins.remote.result.trigger.exceptions;
 
+import java.io.Serial;
+
 /**
  * jenkins request status is not 200
  *
  * @author HW
  */
 public class UnSuccessfulRequestStatusException extends Exception {
+    @Serial
     private static final long serialVersionUID = 8420230702251100687L;
     private final int status;
     private final String url;
