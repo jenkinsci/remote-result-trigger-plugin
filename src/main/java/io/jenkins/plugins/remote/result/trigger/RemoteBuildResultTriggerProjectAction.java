@@ -12,6 +12,7 @@ import io.jenkins.plugins.remote.result.trigger.model.JobResultDisplayInfo;
 import io.jenkins.plugins.remote.result.trigger.model.JobResultInfo;
 import io.jenkins.plugins.remote.result.trigger.utils.RemoteJobResultUtils;
 import org.apache.commons.jelly.XMLOutput;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,6 +49,15 @@ public class RemoteBuildResultTriggerProjectAction implements Action {
             results.add(info);
         }
         return results;
+    }
+
+    /**
+     * 清理
+     */
+    @RequirePOST
+    @SuppressWarnings("unused")
+    public void doClean() throws IOException {
+        RemoteJobResultUtils.cleanCache(job);
     }
 
     /**

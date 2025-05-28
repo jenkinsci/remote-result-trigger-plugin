@@ -358,6 +358,16 @@ public class RemoteJobResultUtils {
     }
 
     /**
+     * 清理缓存
+     */
+    public static void cleanCache(BuildableItem job) throws IOException {
+        File file = getRemoteResultConfigFile(job);
+        if (file.exists()) {
+            FileUtils.delete(file);
+        }
+    }
+
+    /**
      * get remote result config file
      *
      * @param job Jenkins job
@@ -420,5 +430,4 @@ public class RemoteJobResultUtils {
         }
         return envs;
     }
-
 }

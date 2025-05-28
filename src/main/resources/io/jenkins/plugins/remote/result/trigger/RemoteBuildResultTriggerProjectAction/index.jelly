@@ -29,7 +29,13 @@ THE SOFTWARE.
         <st:include it="${it.owner}" page="sidepanel.jelly"/>
         <l:main-panel>
             <section class="jenkins-section">
-                <div class="jenkins-section__title">Trigger Log</div>
+                <div class="jenkins-section__title">Trigger Log
+                    <div style="float: right">
+                    <f:form method="post" action="clean">
+                        <f:apply value="Clean Cache"/>
+                    </f:form>
+                    </div>
+                </div>
                 <j:set var="log" value="${it.log}"/>
                 <j:choose>
                     <j:when test="${empty(log)}">
