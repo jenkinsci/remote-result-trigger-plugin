@@ -1,5 +1,6 @@
 package io.jenkins.plugins.remote.result.trigger.utils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionType;
@@ -20,10 +21,7 @@ import javax.net.ssl.X509TrustManager;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -385,7 +383,7 @@ public class RemoteJobResultUtils {
      * @return envs
      */
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private static Map<String, String> generateEnvs(String prefix, JobResultInfo jobResultInfo) {
+    private static Map<String, String> generateEnvs(String prefix, JobResultInfo jobResultInfo) throws JsonProcessingException {
         Map<String, String> envs = new HashMap<>();
         if (jobResultInfo.getBuildResult() != null) {
             SourceMap sourceMap = SourceMap.of(jobResultInfo.getBuildResult());
@@ -422,9 +420,17 @@ public class RemoteJobResultUtils {
             // result json
             Map<String, Object> resultJson = jobResultInfo.getRemoteResult();
             if (resultJson != null) {
+                ObjectMapper mapper = new ObjectMapper();
                 SourceMap map = SourceMap.of(resultJson);
                 for (String key : resultJson.keySet()) {
-                    envs.put(prefix + "RESULT_" + key, map.stringValue(key));
+                    Object object = map.getSource().get(key);
+                    if (object instanceof String) {
+                        envs.put(prefix + "RESULT_" + key, map.stringValue(key));
+                    } else if (object instanceof Collection<?> || object instanceof Map<?, ?>) {
+                        envs.put(prefix + "RESULT_" + key, mapper.writeValueAsString(object));
+                    } else {
+                        envs.put(prefix + "RESULT_" + key, object.toString());
+                    }
                 }
             }
         }
