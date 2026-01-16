@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hudson.model.Action;
 import hudson.model.Run;
+import lombok.Getter;
 import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
 
@@ -14,6 +15,7 @@ import java.util.Map;
  */
 @ExportedBean
 public class RemoteResultAction implements Action {
+    @Getter
     private final Run<?, ?> run;
     private final Map<String, Object> result;
 
@@ -35,10 +37,6 @@ public class RemoteResultAction implements Action {
             return new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(result);
         }
         return null;
-    }
-
-    public Run<?, ?> getRun() {
-        return this.run;
     }
 
     /**

@@ -7,6 +7,7 @@ import hudson.util.FormValidation;
 import io.jenkins.plugins.remote.result.trigger.auth2.Auth2;
 import io.jenkins.plugins.remote.result.trigger.auth2.NoneAuth;
 import jenkins.model.Jenkins;
+import lombok.Getter;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
@@ -25,6 +26,7 @@ import java.util.List;
  *
  * @author Maurice W.
  */
+@Getter
 public class RemoteJenkinsServer implements Describable<RemoteJenkinsServer>, Serializable {
 
     @Serial
@@ -54,17 +56,9 @@ public class RemoteJenkinsServer implements Describable<RemoteJenkinsServer>, Se
     public RemoteJenkinsServer() {
     }
 
-    public String getId() {
-        return id;
-    }
-
     @DataBoundSetter
     public void setId(String id) {
         this.id = id;
-    }
-
-    public String getDisplayName() {
-        return displayName;
     }
 
     @DataBoundSetter
@@ -72,26 +66,14 @@ public class RemoteJenkinsServer implements Describable<RemoteJenkinsServer>, Se
         this.displayName = displayName;
     }
 
-    public boolean isTrustAllCertificates() {
-        return trustAllCertificates;
-    }
-
     @DataBoundSetter
     public void setTrustAllCertificates(boolean trustAllCertificates) {
         this.trustAllCertificates = trustAllCertificates;
     }
 
-    public Auth2 getAuth2() {
-        return auth2;
-    }
-
     @DataBoundSetter
     public void setAuth2(Auth2 auth2) {
         this.auth2 = auth2;
-    }
-
-    public String getUrl() {
-        return url;
     }
 
     @DataBoundSetter

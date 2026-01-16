@@ -8,6 +8,8 @@ import hudson.util.ListBoxModel;
 import io.jenkins.plugins.remote.result.trigger.model.ResultCheck;
 import io.jenkins.plugins.remote.result.trigger.utils.RemoteJenkinsServerUtils;
 import jenkins.model.Jenkins;
+import lombok.Getter;
+import lombok.Setter;
 import net.sf.json.util.JSONUtils;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.RandomStringUtils;
@@ -37,13 +39,19 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
      */
     private static final String[] ALL_BUILD_RESULT = new String[]{"SUCCESS", "UNSTABLE", "FAILURE", "NOT_BUILT", "ABORTED"};
 
+    @Setter
+    @Getter
     private String id;
+    @Getter
     private String remoteServer;
     @Deprecated
     private String remoteJobName;
     private String remoteJobUrl;
+    @Getter
     private String uid;
+    @Getter
     private List<String> triggerResults = new ArrayList<>();
+    @Getter
     private List<ResultCheck> resultChecks = new ArrayList<>();
 
     @DataBoundConstructor
@@ -62,18 +70,6 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
     @Override
     public Descriptor<RemoteJobInfo> getDescriptor() {
         return Jenkins.get().getDescriptor(getClass());
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getRemoteServer() {
-        return remoteServer;
     }
 
     @DataBoundSetter
@@ -108,21 +104,9 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
         this.remoteJobName = remoteJobName;
     }
 
-    public String getUid() {
-        return uid;
-    }
-
     @DataBoundSetter
     public void setUid(String uid) {
         this.uid = StringUtils.isEmpty(uid) ? RandomStringUtils.randomAlphabetic(32) : uid;
-    }
-
-    public List<String> getTriggerResults() {
-        return triggerResults;
-    }
-
-    public List<ResultCheck> getResultChecks() {
-        return resultChecks;
     }
 
     @DataBoundSetter

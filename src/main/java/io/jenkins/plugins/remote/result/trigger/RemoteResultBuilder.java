@@ -16,6 +16,7 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import io.jenkins.plugins.remote.result.trigger.exceptions.JsonNotMatchException;
 import jenkins.tasks.SimpleBuildStep;
+import lombok.Getter;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -28,6 +29,7 @@ import java.util.Map;
 /**
  * @author heweisc@dingtalk.com
  */
+@Getter
 public class RemoteResultBuilder extends Builder implements SimpleBuildStep, Serializable {
     @Serial
     private static final long serialVersionUID = -1800772775254484836L;
@@ -41,10 +43,6 @@ public class RemoteResultBuilder extends Builder implements SimpleBuildStep, Ser
     @DataBoundSetter
     public void setResult(String result) {
         this.result = result;
-    }
-
-    public String getResult() {
-        return result;
     }
 
     /**

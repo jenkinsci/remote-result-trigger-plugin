@@ -1,5 +1,6 @@
 package io.jenkins.plugins.remote.result.trigger.model;
 
+import lombok.Getter;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.Serial;
@@ -8,6 +9,7 @@ import java.io.Serializable;
 /**
  * @author heweisc@dingtalk.com
  */
+@Getter
 public class ResultCheck implements Serializable {
     @Serial
     private static final long serialVersionUID = 5215261093367652434L;
@@ -18,13 +20,5 @@ public class ResultCheck implements Serializable {
     public ResultCheck(String key, String expectedValue) {
         this.key = key;
         this.expectedValue = expectedValue;
-    }
-
-    public String getKey() {
-        return key;
-    }
-
-    public String getExpectedValue() {
-        return expectedValue;
     }
 }
