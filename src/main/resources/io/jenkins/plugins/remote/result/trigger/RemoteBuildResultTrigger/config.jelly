@@ -10,7 +10,7 @@
     <f:section title="Schedule">
         <f:entry title="${%Schedule}" help="/descriptor/hudson.triggers.TimerTrigger/help/spec">
             <f:textarea name="cronTabSpec"
-                        checkUrl="'${rootURL}/trigger/TimerTrigger/check?value='+encodeURIComponent(this.value)"
+                        checkUrl="${rootURL}/trigger/TimerTrigger/check" checkDependsOn=""
                         value="${instance.spec}"/>
         </f:entry>
     </f:section>
