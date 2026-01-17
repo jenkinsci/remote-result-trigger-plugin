@@ -15,13 +15,13 @@ import io.jenkins.plugins.remote.result.trigger.utils.ssl.SSLSocketManager;
 import okhttp3.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
-import org.springframework.lang.NonNull;
 
 import javax.net.ssl.X509TrustManager;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -99,14 +99,8 @@ public class RemoteJobResultUtils {
      * @param number  checked number
      */
     public static void saveCheckedNumber(BuildableItem job, RemoteJobInfo jobInfo, int number) throws IOException {
-        JobResultInfo jobResultInfo = getSavedJobInfo(job, jobInfo);
-        if (jobResultInfo == null) {
-            jobResultInfo = new JobResultInfo();
-        }
-
-        jobResultInfo.setCheckedNumber(number);
-
-        saveBuildResultInfo(job, jobInfo, jobResultInfo);
+        safeSaveBuildResultInfo(job, jobInfo, (Consumer<JobResultInfo>)
+                jobResultInfo -> jobResultInfo.setCheckedNumber(number));
     }
 
     /**
@@ -117,14 +111,8 @@ public class RemoteJobResultUtils {
      * @param number  trigger number
      */
     public static void saveTriggeredNumber(BuildableItem job, RemoteJobInfo jobInfo, int number) throws IOException {
-        JobResultInfo jobResultInfo = getSavedJobInfo(job, jobInfo);
-        if (jobResultInfo == null) {
-            jobResultInfo = new JobResultInfo();
-        }
-
-        jobResultInfo.setTriggeredNumber(number);
-
-        saveBuildResultInfo(job, jobInfo, jobResultInfo);
+        safeSaveBuildResultInfo(job, jobInfo, (Consumer<JobResultInfo>)
+                jobResultInfo -> jobResultInfo.setTriggeredNumber(number));
     }
 
     /**
@@ -135,14 +123,8 @@ public class RemoteJobResultUtils {
      * @param remoteResult result json
      */
     public static void saveRemoteResultInfo(BuildableItem job, RemoteJobInfo jobInfo, SourceMap remoteResult) throws IOException {
-        JobResultInfo jobResultInfo = getSavedJobInfo(job, jobInfo);
-        if (jobResultInfo == null) {
-            jobResultInfo = new JobResultInfo();
-        }
-
-        jobResultInfo.setRemoteResult(remoteResult.getSource());
-
-        saveBuildResultInfo(job, jobInfo, jobResultInfo);
+        safeSaveBuildResultInfo(job, jobInfo, (Consumer<JobResultInfo>)
+                jobResultInfo -> jobResultInfo.setRemoteResult(remoteResult.getSource()));
     }
 
     /**
@@ -153,14 +135,8 @@ public class RemoteJobResultUtils {
      * @param buildResult api result
      */
     public static void saveBuildResultInfo(BuildableItem job, RemoteJobInfo jobInfo, SourceMap buildResult) throws IOException {
-        JobResultInfo jobResultInfo = getSavedJobInfo(job, jobInfo);
-        if (jobResultInfo == null) {
-            jobResultInfo = new JobResultInfo();
-        }
-
-        jobResultInfo.setBuildResult(buildResult.getSource());
-
-        saveBuildResultInfo(job, jobInfo, jobResultInfo);
+        safeSaveBuildResultInfo(job, jobInfo, (Consumer<JobResultInfo>)
+                jobResultInfo -> jobResultInfo.setBuildResult(buildResult.getSource()));
     }
 
     /**
@@ -169,7 +145,6 @@ public class RemoteJobResultUtils {
      * @param job            Jenkins job
      * @param remoteJobInfos remote Job infos
      */
-    @NonNull
     public static void cleanUnusedBuildInfo(BuildableItem job, List<RemoteJobInfo> remoteJobInfos) {
         try {
             if (remoteJobInfos != null) {
@@ -188,6 +163,20 @@ public class RemoteJobResultUtils {
         } catch (IOException e) {
             // do nothing
         }
+    }
+
+    /**
+     * 保存
+     */
+    private static void safeSaveBuildResultInfo(BuildableItem job, RemoteJobInfo jobInfo, Consumer<JobResultInfo> apply) throws IOException {
+        JobResultInfo jobResultInfo = getSavedJobInfo(job, jobInfo);
+        if (jobResultInfo == null) {
+            jobResultInfo = new JobResultInfo();
+        }
+
+        apply.accept(jobResultInfo);
+
+        saveBuildResultInfo(job, jobInfo, jobResultInfo);
     }
 
     /**
