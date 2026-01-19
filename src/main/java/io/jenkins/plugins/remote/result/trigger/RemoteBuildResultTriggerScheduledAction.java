@@ -8,6 +8,7 @@ import hudson.model.Action;
 import hudson.model.BuildableItem;
 import io.jenkins.plugins.remote.result.trigger.model.JobResultDisplayInfo;
 import io.jenkins.plugins.remote.result.trigger.model.JobResultInfo;
+import lombok.Getter;
 import org.kohsuke.stapler.export.ExportedBean;
 
 import java.io.IOException;
@@ -19,16 +20,13 @@ import java.util.List;
  */
 @ExportedBean
 public class RemoteBuildResultTriggerScheduledAction implements Action {
+    @Getter
     private final transient BuildableItem item;
     private final List<JobResultInfo> jobResultInfos;
 
     public RemoteBuildResultTriggerScheduledAction(BuildableItem item, List<JobResultInfo> jobResultInfos) {
         this.item = item;
         this.jobResultInfos = jobResultInfos;
-    }
-
-    public BuildableItem getItem() {
-        return item;
     }
 
     @NonNull

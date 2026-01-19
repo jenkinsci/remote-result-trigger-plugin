@@ -5,6 +5,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Extension;
 import hudson.model.Run;
 import io.jenkins.plugins.remote.result.trigger.model.JobResultInfo;
+import lombok.Getter;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.steps.*;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -21,6 +22,7 @@ import java.util.Set;
  * @author heweisc@dingtalk.com
  */
 public class ReadRemoteResultStep extends Step {
+    @Getter
     private String uid;
 
     @DataBoundConstructor
@@ -30,10 +32,6 @@ public class ReadRemoteResultStep extends Step {
     @Override
     public StepExecution start(StepContext context) throws Exception {
         return new ReadRemoteResultStepExecution(this, context);
-    }
-
-    public String getUid() {
-        return uid;
     }
 
     @DataBoundSetter

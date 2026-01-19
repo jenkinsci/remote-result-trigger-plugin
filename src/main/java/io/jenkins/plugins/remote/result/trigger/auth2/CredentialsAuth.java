@@ -10,6 +10,7 @@ import hudson.model.Item;
 import hudson.util.ListBoxModel;
 import io.jenkins.plugins.remote.result.trigger.exceptions.CredentialsNotFoundException;
 import jenkins.model.Jenkins;
+import lombok.Getter;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
@@ -27,6 +28,7 @@ import java.util.List;
 /**
  * @author HW
  */
+@Getter
 public class CredentialsAuth extends Auth2 {
 
     @Serial
@@ -45,10 +47,6 @@ public class CredentialsAuth extends Auth2 {
     @DataBoundSetter
     public void setCredentialsId(String credentialsId) {
         this.credentialsId = credentialsId;
-    }
-
-    public String getCredentialsId() {
-        return credentialsId;
     }
 
     /**

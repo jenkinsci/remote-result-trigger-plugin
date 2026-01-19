@@ -17,6 +17,7 @@ import io.jenkins.plugins.remote.result.trigger.model.ResultCheck;
 import io.jenkins.plugins.remote.result.trigger.utils.RemoteJobResultUtils;
 import io.jenkins.plugins.remote.result.trigger.utils.SourceMap;
 import jenkins.model.Jenkins;
+import lombok.Getter;
 import net.sf.json.JSONObject;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -42,6 +43,7 @@ import java.util.regex.Pattern;
 public class RemoteBuildResultTrigger extends AbstractTrigger implements Serializable {
     @Serial
     private static final long serialVersionUID = -4059001060991775146L;
+    @Getter
     private final List<RemoteJobInfo> remoteJobInfos;
 
     @DataBoundConstructor
@@ -226,10 +228,6 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
     @Override
     public RemoteBuildResultTriggerDescriptor getDescriptor() {
         return (RemoteBuildResultTriggerDescriptor) Jenkins.get().getDescriptorOrDie(getClass());
-    }
-
-    public List<RemoteJobInfo> getRemoteJobInfos() {
-        return remoteJobInfos;
     }
 
     private Integer getMinBuildNumber(Item job, RemoteJobInfo jobInfo, int checkedNumber)

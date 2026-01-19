@@ -1,5 +1,6 @@
 package io.jenkins.plugins.remote.result.trigger.utils;
 
+import lombok.Getter;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.core.convert.support.DefaultConversionService;
@@ -12,6 +13,7 @@ import java.util.Map;
  *
  * @author HW
  */
+@Getter
 public class SourceMap {
     /**
      * 类型转换器
@@ -186,13 +188,6 @@ public class SourceMap {
             return SourceMap.of(value);
         }
         return null;
-    }
-
-    /**
-     * get source
-     */
-    public Map<String, Object> getSource() {
-        return source;
     }
 
     public boolean containsKey(String key) {

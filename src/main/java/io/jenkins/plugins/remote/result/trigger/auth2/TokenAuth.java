@@ -5,6 +5,7 @@ import hudson.Extension;
 import hudson.model.Item;
 import hudson.util.Secret;
 import io.jenkins.plugins.remote.result.trigger.exceptions.CredentialsNotFoundException;
+import lombok.Getter;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
@@ -17,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 /**
  * @author HW
  */
+@Getter
 public class TokenAuth extends Auth2 {
 
     @Serial
@@ -39,17 +41,9 @@ public class TokenAuth extends Auth2 {
         this.userName = userName;
     }
 
-    public String getUserName() {
-        return this.userName;
-    }
-
     @DataBoundSetter
     public void setApiToken(Secret apiToken) {
         this.apiToken = apiToken;
-    }
-
-    public Secret getApiToken() {
-        return this.apiToken;
     }
 
     /**
