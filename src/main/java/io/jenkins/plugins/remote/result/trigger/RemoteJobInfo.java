@@ -198,8 +198,8 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
         @Restricted(NoExternalUse.class)
         public FormValidation doCheckUid(@QueryParameter String uid) {
             if (StringUtils.isNotEmpty(uid)) {
-                if (!uid.matches("[a-zA-Z0-9/_-]*")) {
-                    return FormValidation.error("Only support [a-zA-Z0-9/_-] characters");
+                if (!uid.matches("[a-zA-Z0-9./_-]*")) {
+                    return FormValidation.error("Only support [a-zA-Z0-9./_-] characters");
                 }
             }
             return FormValidation.ok();
