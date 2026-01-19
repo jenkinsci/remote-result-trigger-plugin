@@ -43,15 +43,19 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
     @Getter
     private String id;
     @Getter
+    @Setter(onMethod_ = @DataBoundSetter)
     private String remoteServer;
     @Deprecated
+    @Setter(onMethod_ = @DataBoundSetter)
     private String remoteJobName;
+    @Setter(onMethod_ = @DataBoundSetter)
     private String remoteJobUrl;
     @Getter
     private String uid;
     @Getter
     private List<String> triggerResults = new ArrayList<>();
     @Getter
+    @Setter(onMethod_ = @DataBoundSetter)
     private List<ResultCheck> resultChecks = new ArrayList<>();
 
     @DataBoundConstructor
@@ -72,11 +76,6 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
         return Jenkins.get().getDescriptor(getClass());
     }
 
-    @DataBoundSetter
-    public void setRemoteServer(String remoteServer) {
-        this.remoteServer = remoteServer;
-    }
-
     @Deprecated
     public String getRemoteJobName() {
         return remoteJobName;
@@ -95,23 +94,8 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
     }
 
     @DataBoundSetter
-    public void setRemoteJobUrl(String remoteJobUrl) {
-        this.remoteJobUrl = remoteJobUrl;
-    }
-
-    @DataBoundSetter
-    public void setRemoteJobName(String remoteJobName) {
-        this.remoteJobName = remoteJobName;
-    }
-
-    @DataBoundSetter
     public void setUid(String uid) {
         this.uid = StringUtils.isEmpty(uid) ? RandomStringUtils.randomAlphabetic(32) : uid;
-    }
-
-    @DataBoundSetter
-    public void setResultChecks(List<ResultCheck> resultChecks) {
-        this.resultChecks = resultChecks;
     }
 
     /**
@@ -198,8 +182,8 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
         @Restricted(NoExternalUse.class)
         public FormValidation doCheckUid(@QueryParameter String uid) {
             if (StringUtils.isNotEmpty(uid)) {
-                if (!uid.matches("[a-zA-Z0-9_-]*")) {
-                    return FormValidation.error("Only support [a-zA-Z0-9_-] characters");
+                if (!uid.matches("[a-zA-Z0-9/_-]*")) {
+                    return FormValidation.error("Only support [a-zA-Z0-9/_-] characters");
                 }
             }
             return FormValidation.ok();
