@@ -3,7 +3,7 @@ package io.jenkins.plugins.remote.result.trigger.utils;
 import io.jenkins.plugins.remote.result.trigger.RemoteBuildResultTrigger;
 import io.jenkins.plugins.remote.result.trigger.RemoteJenkinsServer;
 import jenkins.model.Jenkins;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Global Jenkins Server Tool

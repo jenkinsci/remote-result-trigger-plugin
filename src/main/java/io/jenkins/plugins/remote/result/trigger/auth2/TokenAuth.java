@@ -7,7 +7,7 @@ import hudson.util.Secret;
 import io.jenkins.plugins.remote.result.trigger.exceptions.CredentialsNotFoundException;
 import lombok.Getter;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
