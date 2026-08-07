@@ -14,7 +14,7 @@ import io.jenkins.plugins.remote.result.trigger.model.JobResultInfo;
 import io.jenkins.plugins.remote.result.trigger.utils.ssl.SSLSocketManager;
 import okhttp3.*;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.net.ssl.X509TrustManager;
 import java.io.File;

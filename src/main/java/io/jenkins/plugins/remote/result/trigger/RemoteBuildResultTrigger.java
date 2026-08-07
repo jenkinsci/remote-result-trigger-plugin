@@ -20,7 +20,7 @@ import jenkins.model.Jenkins;
 import lombok.Getter;
 import net.sf.json.JSONObject;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jenkinsci.plugins.xtriggerapi.AbstractTrigger;
 import org.jenkinsci.plugins.xtriggerapi.XTriggerDescriptor;
 import org.jenkinsci.plugins.xtriggerapi.XTriggerException;
