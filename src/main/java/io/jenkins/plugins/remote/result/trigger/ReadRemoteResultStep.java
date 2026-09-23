@@ -6,7 +6,7 @@ import hudson.Extension;
 import hudson.model.Run;
 import io.jenkins.plugins.remote.result.trigger.model.JobResultInfo;
 import lombok.Getter;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jenkinsci.plugins.workflow.steps.*;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;

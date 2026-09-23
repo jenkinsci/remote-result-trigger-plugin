@@ -8,7 +8,7 @@ import io.jenkins.plugins.remote.result.trigger.auth2.Auth2;
 import io.jenkins.plugins.remote.result.trigger.auth2.NoneAuth;
 import jenkins.model.Jenkins;
 import lombok.Getter;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;

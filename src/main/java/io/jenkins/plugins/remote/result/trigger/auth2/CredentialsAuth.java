@@ -12,7 +12,7 @@ import io.jenkins.plugins.remote.result.trigger.exceptions.CredentialsNotFoundEx
 import jenkins.model.Jenkins;
 import lombok.Getter;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
