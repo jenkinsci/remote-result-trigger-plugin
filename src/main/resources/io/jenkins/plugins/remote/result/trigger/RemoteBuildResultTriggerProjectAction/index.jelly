@@ -31,9 +31,7 @@ THE SOFTWARE.
             <section class="jenkins-section">
                 <div class="jenkins-section__title">Trigger Log
                     <div style="float: right">
-                    <f:form method="post" action="clean">
-                        <f:apply value="Clean Cache"/>
-                    </f:form>
+                        <button type="button" class="jenkins-button" onclick="cleanCacheAction(this)">Clean Cache</button>
                     </div>
                 </div>
                 <j:set var="log" value="${it.log}"/>
@@ -83,6 +81,33 @@ THE SOFTWARE.
                     </div>
                 </section>
             </j:if>
+            <script>
+                function cleanCacheAction(btn) {
+                    btn.disabled = true;
+                    btn.textContent = 'Cleaning...';
+                    var headers = {};
+                    var crumbHeader = document.head.dataset.crumbHeader;
+                    var crumbValue = document.head.dataset.crumbValue;
+                    if (crumbHeader) {
+                        headers[crumbHeader] = crumbValue;
+                    }
+                    fetch('clean', {
+                        method: 'POST',
+                        headers: headers
+                    }).then(function(resp) {
+                        if (resp.ok) {
+                            notificationBar.show('Cache cleaned successfully', notificationBar.SUCCESS);
+                            setTimeout(function() { window.location.reload(); }, 1500);
+                        } else {
+                            throw new Error('HTTP ' + resp.status);
+                        }
+                    }).catch(function(e) {
+                        btn.disabled = false;
+                        btn.textContent = 'Clean Cache';
+                        notificationBar.show('Failed to clean cache: ' + e.message, notificationBar.ERROR);
+                    });
+                }
+            </script>
         </l:main-panel>
     </l:layout>
 </j:jelly>
