@@ -20,7 +20,7 @@
 
     <f:entry title="Result Checks"
              help="/descriptor/io.jenkins.plugins.remote.result.trigger.RemoteJobInfo/help/checks">
-        <f:repeatable var="check" name="resultChecks" items="${instance.resultChecks}" add="Add check" minimum="0">
+        <f:repeatable var="check" name="resultChecks" items="${instance.resultChecks}" add="Add check" minimum="0" header="Result Check">
             <f:entry title="Result Key">
                 <f:textbox name="resultChecks.key" value="${check.key}"/>
             </f:entry>

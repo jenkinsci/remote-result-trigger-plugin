@@ -3,7 +3,7 @@
 
     <f:section title="Remote Job Info">
         <f:entry>
-            <f:repeatableProperty field="remoteJobInfos"/>
+            <f:repeatableProperty field="remoteJobInfos" header="Remote Job"/>
         </f:entry>
     </f:section>
 
