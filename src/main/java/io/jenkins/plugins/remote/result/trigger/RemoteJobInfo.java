@@ -3,6 +3,7 @@ package io.jenkins.plugins.remote.result.trigger;
 import hudson.Extension;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
+import hudson.model.Item;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import io.jenkins.plugins.remote.result.trigger.model.ResultCheck;
@@ -16,6 +17,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -157,12 +159,17 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
         /**
          * Validates the remoteServer
          *
+         * @param item         the ancestor item (job) whose configuration page hosts this form, may be null
          * @param remoteServer Remote Jenkins Server to be validated
          * @return FormValidation object
          */
         @POST
         @Restricted(NoExternalUse.class)
-        public FormValidation doCheckRemoteServer(@QueryParameter String remoteServer) {
+        public FormValidation doCheckRemoteServer(@AncestorInPath Item item,
+                                                  @QueryParameter String remoteServer) {
+            if (!hasConfigurePermission(item)) {
+                return FormValidation.ok();
+            }
             if (StringUtils.isEmpty(remoteServer)) {
                 return FormValidation.error("Please select a remote Jenkins Server");
             }
@@ -172,12 +179,17 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
         /**
          * Validates the jobName
          *
+         * @param item         the ancestor item (job) whose configuration page hosts this form, may be null
          * @param remoteJobUrl Remote Job Url
          * @return FormValidation object
          */
         @POST
         @Restricted(NoExternalUse.class)
-        public FormValidation doCheckRemoteJobUrl(@QueryParameter String remoteJobUrl) {
+        public FormValidation doCheckRemoteJobUrl(@AncestorInPath Item item,
+                                                  @QueryParameter String remoteJobUrl) {
+            if (!hasConfigurePermission(item)) {
+                return FormValidation.ok();
+            }
             if (StringUtils.isEmpty(remoteJobUrl)) {
                 return FormValidation.error("Please enter a remote job url");
             }
@@ -187,12 +199,17 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
         /**
          * Validates the uid
          *
-         * @param uid Unique Identifier
+         * @param item the ancestor item (job) whose configuration page hosts this form, may be null
+         * @param uid  Unique Identifier
          * @return FormValidation object
          */
         @POST
         @Restricted(NoExternalUse.class)
-        public FormValidation doCheckUid(@QueryParameter String uid) {
+        public FormValidation doCheckUid(@AncestorInPath Item item,
+                                         @QueryParameter String uid) {
+            if (!hasConfigurePermission(item)) {
+                return FormValidation.ok();
+            }
             if (StringUtils.isNotEmpty(uid)) {
                 if (!uid.matches("[a-zA-Z0-9./_-]*")) {
                     return FormValidation.error("Only support [a-zA-Z0-9./_-] characters");
@@ -204,26 +221,68 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
         /**
          * fill remoteServer select
          *
+         * @param item         the ancestor item (job) whose configuration page hosts this form, may be null
+         * @param remoteServer currently selected remote server id, kept when the user may not list servers
          * @return fill list model
          */
         @POST
         @Restricted(NoExternalUse.class)
-        public ListBoxModel doFillRemoteServerItems(@QueryParameter String remoteServer) {
+        public ListBoxModel doFillRemoteServerItems(@AncestorInPath Item item,
+                                                    @QueryParameter String remoteServer) {
             ListBoxModel model = new ListBoxModel();
 
             model.add("");
+
+            if (!hasReadPermission(item)) {
+                // Without read permission we cannot list servers, but keep the currently
+                // selected value so that an existing configuration is not lost.
+                if (StringUtils.isNotEmpty(remoteServer)) {
+                    model.add(remoteServer, remoteServer);
+                }
+                return model;
+            }
 
             RemoteJenkinsServer[] servers = RemoteJenkinsServerUtils.getRemoteServers();
             for (RemoteJenkinsServer server : servers) {
                 String key = StringUtils.isNotEmpty(server.getDisplayName()) ? server.getDisplayName() : server.getUrl();
                 if (server.getId() != null && key != null) {
-                    if (Jenkins.get().hasPermission(Jenkins.READ) || StringUtils.equals(server.getId(), remoteServer)) {
-                        model.add(key, server.getId());
-                    }
+                    model.add(key, server.getId());
                 }
             }
 
             return model;
+        }
+
+        /**
+         * Whether the current user may configure this form.
+         * <p>
+         * These validators run on a job configuration page, so the natural permission is
+         * {@link Item#CONFIGURE} on the ancestor item. When there is no item context (e.g. the
+         * snippet generator), fall back to the global {@link Jenkins#ADMINISTER}.
+         *
+         * @param item the ancestor item, may be null
+         * @return true when the current user is allowed to configure
+         */
+        private static boolean hasConfigurePermission(Item item) {
+            if (item == null) {
+                return Jenkins.get().hasPermission(Jenkins.ADMINISTER);
+            }
+            return item.hasPermission(Item.CONFIGURE);
+        }
+
+        /**
+         * Whether the current user may read the values offered by this form's dropdowns.
+         * <p>
+         * Falls back to the global {@link Jenkins#ADMINISTER} when there is no item context.
+         *
+         * @param item the ancestor item, may be null
+         * @return true when the current user is allowed to read
+         */
+        private static boolean hasReadPermission(Item item) {
+            if (item == null) {
+                return Jenkins.get().hasPermission(Jenkins.ADMINISTER);
+            }
+            return item.hasPermission(Item.EXTENDED_READ) || item.hasPermission(Item.CONFIGURE);
         }
     }
 }
