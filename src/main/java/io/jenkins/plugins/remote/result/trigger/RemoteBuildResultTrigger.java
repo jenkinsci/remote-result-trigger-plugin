@@ -91,6 +91,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
             RemoteJobResultUtils.cleanUnusedBuildInfo(job, remoteJobInfos);
             for (RemoteJobInfo jobInfo : remoteJobInfos) {
                 try {
+                    boolean jobModified = false;
                     log.info("================== " + jobInfo.getRemoteJobUrl() + " ==================");
                     // get next build number
                     Integer lastBuildBuildNumber = RemoteJobResultUtils.requestLastBuildBuildNumber(job, jobInfo);
@@ -129,7 +130,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                             if (resultJson == null) {
                                                 log.error("Cannot find remote result json!");
                                             } else {
-                                                modified = true;
+                                                jobModified = true;
                                                 for (ResultCheck check : resultChecks) {
                                                     if (StringUtils.isNotEmpty(check.getKey())
                                                             && StringUtils.isNotEmpty(check.getExpectedValue())) {
@@ -138,20 +139,20 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                                             Pattern pattern = Pattern.compile(check.getExpectedValue());
                                                             if (!pattern.matcher(value).matches()) {
                                                                 // 发现错误，跳出检查
-                                                                modified = false;
+                                                                jobModified = false;
                                                                 break;
                                                             }
                                                         } else {
-                                                            modified = false;
+                                                            jobModified = false;
                                                         }
                                                     }
                                                 }
                                             }
                                         } else {
-                                            modified = true;
+                                            jobModified = true;
                                         }
 
-                                        if (modified) {
+                                        if (jobModified) {
                                             // changed
                                             log.info("Need trigger, remote build result: " + result.stringValue("result"));
                                             // save info
@@ -161,6 +162,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                                 RemoteJobResultUtils.saveRemoteResultInfo(job, jobInfo, resultJson);
                                             }
                                             // 这个任务检查完成了，继续下一个任务检查
+                                            modified = true;
                                             break;
                                         }
                                     }
