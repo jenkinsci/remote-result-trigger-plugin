@@ -2,6 +2,7 @@ package io.jenkins.plugins.remote.result.trigger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import hudson.model.Action;
 import hudson.model.Run;
 import lombok.Getter;
@@ -15,6 +16,10 @@ import java.util.Map;
  */
 @ExportedBean
 public class RemoteResultAction implements Action {
+    /**
+     * 复用的美化 JSON 输出器（线程安全）
+     */
+    private static final ObjectWriter JSON_PRETTY = new ObjectMapper().writerWithDefaultPrettyPrinter();
     @Getter
     private final Run<?, ?> run;
     private final Map<String, Object> result;
@@ -34,7 +39,7 @@ public class RemoteResultAction implements Action {
      */
     public String getPrettyJson() throws JsonProcessingException {
         if (result != null) {
-            return new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(result);
+            return JSON_PRETTY.writeValueAsString(result);
         }
         return null;
     }

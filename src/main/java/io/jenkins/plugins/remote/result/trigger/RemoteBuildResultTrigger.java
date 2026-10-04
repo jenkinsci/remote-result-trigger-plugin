@@ -43,6 +43,10 @@ import java.util.regex.Pattern;
 public class RemoteBuildResultTrigger extends AbstractTrigger implements Serializable {
     @Serial
     private static final long serialVersionUID = -4059001060991775146L;
+    /**
+     * 复用的美化 JSON 输出器（线程安全）
+     */
+    private static final ObjectWriter JSON_PRETTY = new ObjectMapper().writerWithDefaultPrettyPrinter();
     @Getter
     private final List<RemoteJobInfo> remoteJobInfos;
 
@@ -78,7 +82,6 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
     @SuppressFBWarnings(value = "NP_NULL_PARAM_DEREF")
     protected boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException {
         boolean modified = false;
-        ObjectWriter jsonPretty = new ObjectMapper().writerWithDefaultPrettyPrinter();
         // check job is null
         if (job == null) {
             return false;
@@ -88,6 +91,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
             RemoteJobResultUtils.cleanUnusedBuildInfo(job, remoteJobInfos);
             for (RemoteJobInfo jobInfo : remoteJobInfos) {
                 try {
+                    boolean jobModified = false;
                     log.info("================== " + jobInfo.getRemoteJobUrl() + " ==================");
                     // get next build number
                     Integer lastBuildBuildNumber = RemoteJobResultUtils.requestLastBuildBuildNumber(job, jobInfo);
@@ -109,9 +113,9 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
 
                                 log.info("Last build url: " + buildUrl);
                                 log.info("Last build number: " + buildNumber);
-                                log.info("Remote build result: " + jsonPretty.writeValueAsString(result.getSource()));
+                                log.info("Remote build result: " + JSON_PRETTY.writeValueAsString(result.getSource()));
                                 if (resultJson != null) {
-                                    log.info("Remote build result json: " + jsonPretty.writeValueAsString(resultJson.getSource()));
+                                    log.info("Remote build result json: " + JSON_PRETTY.writeValueAsString(resultJson.getSource()));
                                 }
 
                                 // build completed
@@ -126,7 +130,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                             if (resultJson == null) {
                                                 log.error("Cannot find remote result json!");
                                             } else {
-                                                modified = true;
+                                                jobModified = true;
                                                 for (ResultCheck check : resultChecks) {
                                                     if (StringUtils.isNotEmpty(check.getKey())
                                                             && StringUtils.isNotEmpty(check.getExpectedValue())) {
@@ -135,20 +139,20 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                                             Pattern pattern = Pattern.compile(check.getExpectedValue());
                                                             if (!pattern.matcher(value).matches()) {
                                                                 // 发现错误，跳出检查
-                                                                modified = false;
+                                                                jobModified = false;
                                                                 break;
                                                             }
                                                         } else {
-                                                            modified = false;
+                                                            jobModified = false;
                                                         }
                                                     }
                                                 }
                                             }
                                         } else {
-                                            modified = true;
+                                            jobModified = true;
                                         }
 
-                                        if (modified) {
+                                        if (jobModified) {
                                             // changed
                                             log.info("Need trigger, remote build result: " + result.stringValue("result"));
                                             // save info
@@ -158,6 +162,7 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
                                                 RemoteJobResultUtils.saveRemoteResultInfo(job, jobInfo, resultJson);
                                             }
                                             // 这个任务检查完成了，继续下一个任务检查
+                                            modified = true;
                                             break;
                                         }
                                     }
@@ -258,15 +263,17 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
         source.remove("artifacts");
         source.remove("_class");
         // 清理actions
-        List<Map> actions = result.listValue("actions", Map.class);
         SourceMap resultJson = null;
-        for (Map action : actions) {
-            SourceMap sourceMap = SourceMap.of(action);
-            if (RemoteResultAction.class.getName().equals(sourceMap.stringValue("_class"))) {
-                Map resultJsonMap = sourceMap.sourceMap("result").getSource();
-                resultJsonMap.remove("_class");
-                resultJson = SourceMap.of(resultJsonMap);
-                break;
+        List<Map> actions = result.listValue("actions", Map.class);
+        if (actions != null) {
+            for (Map action : actions) {
+                SourceMap sourceMap = SourceMap.of(action);
+                if (RemoteResultAction.class.getName().equals(sourceMap.stringValue("_class"))) {
+                    Map resultJsonMap = sourceMap.sourceMap("result").getSource();
+                    resultJsonMap.remove("_class");
+                    resultJson = SourceMap.of(resultJsonMap);
+                    break;
+                }
             }
         }
         source.remove("actions");

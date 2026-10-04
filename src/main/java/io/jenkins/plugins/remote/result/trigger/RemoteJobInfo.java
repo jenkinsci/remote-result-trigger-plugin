@@ -87,9 +87,11 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
         if (remoteJobUrl == null && remoteJobName != null && remoteServer != null) {
             RemoteJenkinsServer remoteServer = RemoteJenkinsServerUtils
                     .getRemoteJenkinsServer(getRemoteServer());
-            return remoteServer.getUrl() +
-                    (remoteServer.getUrl().endsWith("/") ? "" : "/") +
-                    remoteJobName;
+            if (remoteServer != null) {
+                return remoteServer.getUrl() +
+                        (remoteServer.getUrl().endsWith("/") ? "" : "/") +
+                        remoteJobName;
+            }
         }
         return remoteJobUrl;
     }

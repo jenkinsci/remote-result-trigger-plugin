@@ -20,6 +20,10 @@ import java.util.List;
  */
 @ExportedBean
 public class RemoteBuildResultTriggerScheduledAction implements Action {
+    /**
+     * 复用的美化 JSON 输出器（线程安全）
+     */
+    private static final ObjectWriter JSON_PRETTY = new ObjectMapper().writerWithDefaultPrettyPrinter();
     @Getter
     private final transient BuildableItem item;
     private final List<JobResultInfo> jobResultInfos;
@@ -35,15 +39,14 @@ public class RemoteBuildResultTriggerScheduledAction implements Action {
     }
 
     public List<JobResultDisplayInfo> getJobResultDisplayInfos() throws IOException {
-        ObjectWriter jsonPretty = new ObjectMapper().writerWithDefaultPrettyPrinter();
         List<JobResultDisplayInfo> results = new ArrayList<>();
         for (JobResultInfo jobResultInfo : jobResultInfos) {
             JobResultDisplayInfo info = new JobResultDisplayInfo();
             info.setRemoteJobUrl(jobResultInfo.getRemoteJobUrl());
             info.setBuildUrl(jobResultInfo.getBuildUrl());
-            info.setResult(jsonPretty.writeValueAsString(jobResultInfo.getBuildResult()));
+            info.setResult(JSON_PRETTY.writeValueAsString(jobResultInfo.getBuildResult()));
             if (jobResultInfo.getRemoteResult() != null) {
-                info.setResultJson(jsonPretty.writeValueAsString(jobResultInfo.getRemoteResult()));
+                info.setResultJson(JSON_PRETTY.writeValueAsString(jobResultInfo.getRemoteResult()));
             }
             results.add(info);
         }

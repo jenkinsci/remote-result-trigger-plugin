@@ -3,6 +3,7 @@ package io.jenkins.plugins.remote.result.trigger.utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.type.CollectionType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import hudson.model.BuildableItem;
@@ -20,6 +21,10 @@ import javax.net.ssl.X509TrustManager;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.time.Duration;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -30,6 +35,48 @@ import java.util.stream.Collectors;
  * @author HW
  */
 public class RemoteJobResultUtils {
+
+    /**
+     * HTTP 请求超时时间
+     */
+    private static final Duration HTTP_TIMEOUT = Duration.ofSeconds(30);
+
+    /**
+     * 复用的 ObjectMapper（线程安全），关闭未知字段校验以兼容不同版本远程 API 返回
+     */
+    private static final ObjectMapper MAPPER = new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+    /**
+     * 复用的美化 JSON 输出器（线程安全）
+     */
+    private static final ObjectWriter PRETTY_WRITER = MAPPER.writerWithDefaultPrettyPrinter();
+
+    /**
+     * 复用的普通 OkHttpClient
+     */
+    private static volatile OkHttpClient sharedHttpClient;
+
+    /**
+     * 复用的信任所有证书的 OkHttpClient
+     */
+    private static volatile OkHttpClient trustAllHttpClient;
+
+    /**
+     * 配置文件读-改-写的分段锁数量
+     */
+    private static final int FILE_LOCK_STRIPES = 32;
+
+    /**
+     * 配置文件分段锁，避免同一 job 的并发写入相互覆盖，同时减少不同 job 之间的串行化
+     */
+    private static final Object[] FILE_LOCKS = new Object[FILE_LOCK_STRIPES];
+
+    static {
+        for (int i = 0; i < FILE_LOCK_STRIPES; i++) {
+            FILE_LOCKS[i] = new Object();
+        }
+    }
 
     /**
      * get remote job last build number
@@ -148,17 +195,16 @@ public class RemoteJobResultUtils {
     public static void cleanUnusedBuildInfo(BuildableItem job, List<RemoteJobInfo> remoteJobInfos) {
         try {
             if (remoteJobInfos != null) {
-                List<JobResultInfo> jobResultInfos = getSavedJobInfos(job);
-                jobResultInfos.removeIf(savedJobInfo -> remoteJobInfos.stream().noneMatch(
-                        remoteJobInfo -> remoteJobInfo.getId().equals(savedJobInfo.getRemoteJob())
-                ));
-                // save to file
                 File file = getRemoteResultConfigFile(job);
-                if (!file.getParentFile().exists()) {
-                    FileUtils.forceMkdirParent(file);
+                // 持有分段锁，保证读-改-写的原子性
+                synchronized (getFileLock(file)) {
+                    List<JobResultInfo> jobResultInfos = getSavedJobInfos(job);
+                    jobResultInfos.removeIf(savedJobInfo -> remoteJobInfos.stream().noneMatch(
+                            remoteJobInfo -> remoteJobInfo.getId().equals(savedJobInfo.getRemoteJob())
+                    ));
+                    // save to file
+                    writeJobResultInfos(file, jobResultInfos);
                 }
-                String string = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(jobResultInfos);
-                FileUtils.writeStringToFile(file, string, StandardCharsets.UTF_8);
             }
         } catch (IOException e) {
             // do nothing
@@ -193,21 +239,20 @@ public class RemoteJobResultUtils {
         jobResultInfo.setRemoteJobUrl(jobInfo.getRemoteJobUrl());
         jobResultInfo.setUid(jobInfo.getUid());
 
-        // get saved list
-        List<JobResultInfo> jobResultInfos = getSavedJobInfos(job);
-        // remove old
-        jobResultInfos.removeIf(
-                info -> info.getRemoteServer().equals(jobResultInfo.getRemoteServer())
-                        && info.getRemoteJob().equals(jobResultInfo.getRemoteJob())
-        );
-        jobResultInfos.add(jobResultInfo);
-        // save to file
         File file = getRemoteResultConfigFile(job);
-        if (!file.getParentFile().exists()) {
-            FileUtils.forceMkdirParent(file);
+        // 持有分段锁，保证读-改-写的原子性，避免并发覆盖
+        synchronized (getFileLock(file)) {
+            // get saved list
+            List<JobResultInfo> jobResultInfos = getSavedJobInfos(job);
+            // remove old
+            jobResultInfos.removeIf(
+                    info -> info.getRemoteServer().equals(jobResultInfo.getRemoteServer())
+                            && info.getRemoteJob().equals(jobResultInfo.getRemoteJob())
+            );
+            jobResultInfos.add(jobResultInfo);
+            // save to file
+            writeJobResultInfos(file, jobResultInfos);
         }
-        String string = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(jobResultInfos);
-        FileUtils.writeStringToFile(file, string, StandardCharsets.UTF_8);
     }
 
     /**
@@ -233,8 +278,59 @@ public class RemoteJobResultUtils {
         List<String> jobs = jobResultInfos.stream()
                 .map(info -> StringUtils.isNotBlank(info.getUid()) ? info.getUid() : info.getRemoteJobUrl())
                 .collect(Collectors.toUnmodifiableList());
-        envs.put("REMOTE_JOBS", new ObjectMapper().writeValueAsString(jobs));
+        envs.put("REMOTE_JOBS", MAPPER.writeValueAsString(jobs));
         return envs;
+    }
+
+    /**
+     * 获取复用的 OkHttpClient，按需懒加载。
+     * OkHttpClient 内部持有连接池与线程池，应复用而非每次请求新建，避免资源泄漏。
+     *
+     * @param trustAllCertificates 是否信任所有证书
+     * @return OkHttpClient
+     */
+    private static OkHttpClient getHttpClient(boolean trustAllCertificates) {
+        if (trustAllCertificates) {
+            OkHttpClient client = trustAllHttpClient;
+            if (client == null) {
+                synchronized (RemoteJobResultUtils.class) {
+                    client = trustAllHttpClient;
+                    if (client == null) {
+                        client = newHttpClientBuilder()
+                                .sslSocketFactory(SSLSocketManager.getSSLSocketFactory(),
+                                        (X509TrustManager) SSLSocketManager.getTrustManager()[0])
+                                .hostnameVerifier(SSLSocketManager.getHostnameVerifier())
+                                .build();
+                        trustAllHttpClient = client;
+                    }
+                }
+            }
+            return client;
+        }
+        OkHttpClient client = sharedHttpClient;
+        if (client == null) {
+            synchronized (RemoteJobResultUtils.class) {
+                client = sharedHttpClient;
+                if (client == null) {
+                    client = newHttpClientBuilder().build();
+                    sharedHttpClient = client;
+                }
+            }
+        }
+        return client;
+    }
+
+    /**
+     * 创建带超时配置的 OkHttpClient Builder
+     *
+     * @return OkHttpClient.Builder
+     */
+    private static OkHttpClient.Builder newHttpClientBuilder() {
+        return new OkHttpClient.Builder()
+                .connectTimeout(HTTP_TIMEOUT)
+                .writeTimeout(HTTP_TIMEOUT)
+                .readTimeout(HTTP_TIMEOUT)
+                .callTimeout(HTTP_TIMEOUT);
     }
 
     /**
@@ -247,9 +343,6 @@ public class RemoteJobResultUtils {
      */
     private static String requestRemoteApi(Item job, RemoteJobInfo jobInfo, String apiUrl)
             throws IOException, UnSuccessfulRequestStatusException {
-        // OkHttp Client
-        OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
-
         RemoteJenkinsServer remoteServer = RemoteJenkinsServerUtils
                 .getRemoteJenkinsServer(jobInfo.getRemoteServer());
 
@@ -258,14 +351,8 @@ public class RemoteJobResultUtils {
             return null;
         }
 
-        // trustAllCertificates
-        if (remoteServer.isTrustAllCertificates()) {
-            clientBuilder
-                    .sslSocketFactory(SSLSocketManager.getSSLSocketFactory(),
-                            (X509TrustManager) SSLSocketManager.getTrustManager()[0])
-                    .hostnameVerifier(SSLSocketManager.getHostnameVerifier());
-        }
-        OkHttpClient okHttpClient = clientBuilder.build();
+        // 复用 OkHttpClient（按是否信任所有证书区分），避免每次请求新建造成资源泄漏
+        OkHttpClient okHttpClient = getHttpClient(remoteServer.isTrustAllCertificates());
 
         // OkHttp Request
         Request.Builder requestBuilder = new Request.Builder();
@@ -304,10 +391,8 @@ public class RemoteJobResultUtils {
         String body = requestRemoteApi(job, jobInfo, apiUrl);
         if (body != null) {
             // json
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
             //noinspection unchecked
-            return SourceMap.of(mapper.readValue(body, Map.class));
+            return SourceMap.of(MAPPER.readValue(body, Map.class));
         }
         return null;
     }
@@ -336,10 +421,8 @@ public class RemoteJobResultUtils {
     public static List<JobResultInfo> getSavedJobInfos(Item job) throws IOException {
         File file = getRemoteResultConfigFile(job);
         if (file.exists()) {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
             CollectionType collectionType = TypeFactory.defaultInstance().constructCollectionType(List.class, JobResultInfo.class);
-            return mapper.readValue(file, collectionType);
+            return MAPPER.readValue(file, collectionType);
         }
         return new ArrayList<>();
     }
@@ -349,8 +432,10 @@ public class RemoteJobResultUtils {
      */
     public static void cleanCache(BuildableItem job) throws IOException {
         File file = getRemoteResultConfigFile(job);
-        if (file.exists()) {
-            FileUtils.delete(file);
+        synchronized (getFileLock(file)) {
+            if (file.exists()) {
+                FileUtils.delete(file);
+            }
         }
     }
 
@@ -361,7 +446,38 @@ public class RemoteJobResultUtils {
      * @return config file
      */
     private static File getRemoteResultConfigFile(Item job) {
-        return new File(job.getRootDir().getAbsolutePath() + "/remote-build-result.json");
+        return new File(job.getRootDir(), "remote-build-result.json");
+    }
+
+    /**
+     * 获取配置文件对应的分段锁
+     *
+     * @param file 配置文件
+     * @return 锁对象
+     */
+    private static Object getFileLock(File file) {
+        return FILE_LOCKS[Math.floorMod(file.getAbsolutePath().hashCode(), FILE_LOCK_STRIPES)];
+    }
+
+    /**
+     * 原子写入配置：先写临时文件再移动覆盖，避免并发读取到写入一半的内容。
+     * 调用方需持有对应文件的分段锁。
+     *
+     * @param file           配置文件
+     * @param jobResultInfos 待写入的数据
+     */
+    private static void writeJobResultInfos(File file, List<JobResultInfo> jobResultInfos) throws IOException {
+        if (!file.getParentFile().exists()) {
+            FileUtils.forceMkdirParent(file);
+        }
+        String string = PRETTY_WRITER.writeValueAsString(jobResultInfos);
+        File tmpFile = new File(file.getParentFile(), file.getName() + ".tmp");
+        FileUtils.writeStringToFile(tmpFile, string, StandardCharsets.UTF_8);
+        try {
+            Files.move(tmpFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+        } catch (AtomicMoveNotSupportedException e) {
+            Files.move(tmpFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        }
     }
 
     /**
@@ -409,14 +525,13 @@ public class RemoteJobResultUtils {
             // result json
             Map<String, Object> resultJson = jobResultInfo.getRemoteResult();
             if (resultJson != null) {
-                ObjectMapper mapper = new ObjectMapper();
                 SourceMap map = SourceMap.of(resultJson);
                 for (String key : resultJson.keySet()) {
                     Object object = map.getSource().get(key);
                     if (object instanceof String) {
                         envs.put(prefix + "RESULT_" + key, map.stringValue(key));
                     } else if (object instanceof Collection<?> || object instanceof Map<?, ?>) {
-                        envs.put(prefix + "RESULT_" + key, mapper.writeValueAsString(object));
+                        envs.put(prefix + "RESULT_" + key, MAPPER.writeValueAsString(object));
                     } else {
                         envs.put(prefix + "RESULT_" + key, object.toString());
                     }
