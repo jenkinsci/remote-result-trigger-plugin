@@ -44,8 +44,7 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
     private String id;
     @Getter
     private String remoteServer;
-    @Deprecated
-    private String remoteJobName;
+    @Getter
     private String remoteJobUrl;
     @Getter
     private String uid;
@@ -77,33 +76,9 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
         this.remoteServer = remoteServer;
     }
 
-    @Deprecated
-    public String getRemoteJobName() {
-        return remoteJobName;
-    }
-
-    public String getRemoteJobUrl() {
-        // 兼容老版本数据
-        if (remoteJobUrl == null && remoteJobName != null && remoteServer != null) {
-            RemoteJenkinsServer remoteServer = RemoteJenkinsServerUtils
-                    .getRemoteJenkinsServer(getRemoteServer());
-            if (remoteServer != null) {
-                return remoteServer.getUrl() +
-                        (remoteServer.getUrl().endsWith("/") ? "" : "/") +
-                        remoteJobName;
-            }
-        }
-        return remoteJobUrl;
-    }
-
     @DataBoundSetter
     public void setRemoteJobUrl(String remoteJobUrl) {
         this.remoteJobUrl = remoteJobUrl;
-    }
-
-    @DataBoundSetter
-    public void setRemoteJobName(String remoteJobName) {
-        this.remoteJobName = remoteJobName;
     }
 
     @DataBoundSetter
