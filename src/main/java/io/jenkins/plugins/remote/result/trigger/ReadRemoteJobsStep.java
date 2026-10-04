@@ -55,7 +55,7 @@ public class ReadRemoteJobsStep extends Step {
 
     public static class ReadRemoteJobsStepExecution extends SynchronousNonBlockingStepExecution<List<Map<?, ?>>> {
         @Serial
-        private static final long serialVersionUID = 4436899316471397907L;
+        private static final long serialVersionUID = 7264019385726401938L;
 
         public ReadRemoteJobsStepExecution(@NonNull StepContext context) {
             super(context);
