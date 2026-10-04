@@ -21,6 +21,9 @@ import javax.net.ssl.X509TrustManager;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.Consumer;
@@ -58,6 +61,22 @@ public class RemoteJobResultUtils {
      * 复用的信任所有证书的 OkHttpClient
      */
     private static volatile OkHttpClient trustAllHttpClient;
+
+    /**
+     * 配置文件读-改-写的分段锁数量
+     */
+    private static final int FILE_LOCK_STRIPES = 32;
+
+    /**
+     * 配置文件分段锁，避免同一 job 的并发写入相互覆盖，同时减少不同 job 之间的串行化
+     */
+    private static final Object[] FILE_LOCKS = new Object[FILE_LOCK_STRIPES];
+
+    static {
+        for (int i = 0; i < FILE_LOCK_STRIPES; i++) {
+            FILE_LOCKS[i] = new Object();
+        }
+    }
 
     /**
      * get remote job last build number
@@ -176,17 +195,16 @@ public class RemoteJobResultUtils {
     public static void cleanUnusedBuildInfo(BuildableItem job, List<RemoteJobInfo> remoteJobInfos) {
         try {
             if (remoteJobInfos != null) {
-                List<JobResultInfo> jobResultInfos = getSavedJobInfos(job);
-                jobResultInfos.removeIf(savedJobInfo -> remoteJobInfos.stream().noneMatch(
-                        remoteJobInfo -> remoteJobInfo.getId().equals(savedJobInfo.getRemoteJob())
-                ));
-                // save to file
                 File file = getRemoteResultConfigFile(job);
-                if (!file.getParentFile().exists()) {
-                    FileUtils.forceMkdirParent(file);
+                // 持有分段锁，保证读-改-写的原子性
+                synchronized (getFileLock(file)) {
+                    List<JobResultInfo> jobResultInfos = getSavedJobInfos(job);
+                    jobResultInfos.removeIf(savedJobInfo -> remoteJobInfos.stream().noneMatch(
+                            remoteJobInfo -> remoteJobInfo.getId().equals(savedJobInfo.getRemoteJob())
+                    ));
+                    // save to file
+                    writeJobResultInfos(file, jobResultInfos);
                 }
-                String string = PRETTY_WRITER.writeValueAsString(jobResultInfos);
-                FileUtils.writeStringToFile(file, string, StandardCharsets.UTF_8);
             }
         } catch (IOException e) {
             // do nothing
@@ -221,21 +239,20 @@ public class RemoteJobResultUtils {
         jobResultInfo.setRemoteJobUrl(jobInfo.getRemoteJobUrl());
         jobResultInfo.setUid(jobInfo.getUid());
 
-        // get saved list
-        List<JobResultInfo> jobResultInfos = getSavedJobInfos(job);
-        // remove old
-        jobResultInfos.removeIf(
-                info -> info.getRemoteServer().equals(jobResultInfo.getRemoteServer())
-                        && info.getRemoteJob().equals(jobResultInfo.getRemoteJob())
-        );
-        jobResultInfos.add(jobResultInfo);
-        // save to file
         File file = getRemoteResultConfigFile(job);
-        if (!file.getParentFile().exists()) {
-            FileUtils.forceMkdirParent(file);
+        // 持有分段锁，保证读-改-写的原子性，避免并发覆盖
+        synchronized (getFileLock(file)) {
+            // get saved list
+            List<JobResultInfo> jobResultInfos = getSavedJobInfos(job);
+            // remove old
+            jobResultInfos.removeIf(
+                    info -> info.getRemoteServer().equals(jobResultInfo.getRemoteServer())
+                            && info.getRemoteJob().equals(jobResultInfo.getRemoteJob())
+            );
+            jobResultInfos.add(jobResultInfo);
+            // save to file
+            writeJobResultInfos(file, jobResultInfos);
         }
-        String string = PRETTY_WRITER.writeValueAsString(jobResultInfos);
-        FileUtils.writeStringToFile(file, string, StandardCharsets.UTF_8);
     }
 
     /**
@@ -415,8 +432,10 @@ public class RemoteJobResultUtils {
      */
     public static void cleanCache(BuildableItem job) throws IOException {
         File file = getRemoteResultConfigFile(job);
-        if (file.exists()) {
-            FileUtils.delete(file);
+        synchronized (getFileLock(file)) {
+            if (file.exists()) {
+                FileUtils.delete(file);
+            }
         }
     }
 
@@ -427,7 +446,38 @@ public class RemoteJobResultUtils {
      * @return config file
      */
     private static File getRemoteResultConfigFile(Item job) {
-        return new File(job.getRootDir().getAbsolutePath() + "/remote-build-result.json");
+        return new File(job.getRootDir(), "remote-build-result.json");
+    }
+
+    /**
+     * 获取配置文件对应的分段锁
+     *
+     * @param file 配置文件
+     * @return 锁对象
+     */
+    private static Object getFileLock(File file) {
+        return FILE_LOCKS[Math.floorMod(file.getAbsolutePath().hashCode(), FILE_LOCK_STRIPES)];
+    }
+
+    /**
+     * 原子写入配置：先写临时文件再移动覆盖，避免并发读取到写入一半的内容。
+     * 调用方需持有对应文件的分段锁。
+     *
+     * @param file           配置文件
+     * @param jobResultInfos 待写入的数据
+     */
+    private static void writeJobResultInfos(File file, List<JobResultInfo> jobResultInfos) throws IOException {
+        if (!file.getParentFile().exists()) {
+            FileUtils.forceMkdirParent(file);
+        }
+        String string = PRETTY_WRITER.writeValueAsString(jobResultInfos);
+        File tmpFile = new File(file.getParentFile(), file.getName() + ".tmp");
+        FileUtils.writeStringToFile(tmpFile, string, StandardCharsets.UTF_8);
+        try {
+            Files.move(tmpFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+        } catch (AtomicMoveNotSupportedException e) {
+            Files.move(tmpFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        }
     }
 
     /**
