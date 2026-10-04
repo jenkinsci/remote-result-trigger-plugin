@@ -42,6 +42,11 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
     @Setter
     @Getter
     private String id;
+    /**
+     * Whether this remote job trigger checking is enabled.
+     * Uses a nullable Boolean so that old configurations (without this field) default to enabled.
+     */
+    private Boolean enable = Boolean.TRUE;
     @Getter
     private String remoteServer;
     @Getter
@@ -55,6 +60,20 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
 
     @DataBoundConstructor
     public RemoteJobInfo() {
+    }
+
+    /**
+     * Whether this remote job trigger checking is enabled, null-safe.
+     *
+     * @return true when enabled (default), false only when explicitly disabled
+     */
+    public boolean isEnable() {
+        return enable == null || enable;
+    }
+
+    @DataBoundSetter
+    public void setEnable(boolean enable) {
+        this.enable = enable;
     }
 
     /**

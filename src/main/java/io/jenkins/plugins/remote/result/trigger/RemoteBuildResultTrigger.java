@@ -91,6 +91,11 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
             RemoteJobResultUtils.cleanUnusedBuildInfo(job, remoteJobInfos);
             for (RemoteJobInfo jobInfo : remoteJobInfos) {
                 try {
+                    // 未启用的任务跳过检查
+                    if (!jobInfo.isEnable()) {
+                        log.info("================== " + jobInfo.getRemoteJobUrl() + " is disabled, skip checking ==================");
+                        continue;
+                    }
                     boolean jobModified = false;
                     log.info("================== " + jobInfo.getRemoteJobUrl() + " ==================");
                     // get next build number
