@@ -43,6 +43,10 @@ import java.util.regex.Pattern;
 public class RemoteBuildResultTrigger extends AbstractTrigger implements Serializable {
     @Serial
     private static final long serialVersionUID = -4059001060991775146L;
+    /**
+     * 复用的美化 JSON 输出器（线程安全）
+     */
+    private static final ObjectWriter JSON_PRETTY = new ObjectMapper().writerWithDefaultPrettyPrinter();
     @Getter
     private final List<RemoteJobInfo> remoteJobInfos;
 
@@ -78,7 +82,6 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
     @SuppressFBWarnings(value = "NP_NULL_PARAM_DEREF")
     protected boolean checkIfModified(Node pollingNode, XTriggerLog log) throws XTriggerException {
         boolean modified = false;
-        ObjectWriter jsonPretty = new ObjectMapper().writerWithDefaultPrettyPrinter();
         // check job is null
         if (job == null) {
             return false;
@@ -109,9 +112,9 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
 
                                 log.info("Last build url: " + buildUrl);
                                 log.info("Last build number: " + buildNumber);
-                                log.info("Remote build result: " + jsonPretty.writeValueAsString(result.getSource()));
+                                log.info("Remote build result: " + JSON_PRETTY.writeValueAsString(result.getSource()));
                                 if (resultJson != null) {
-                                    log.info("Remote build result json: " + jsonPretty.writeValueAsString(resultJson.getSource()));
+                                    log.info("Remote build result json: " + JSON_PRETTY.writeValueAsString(resultJson.getSource()));
                                 }
 
                                 // build completed

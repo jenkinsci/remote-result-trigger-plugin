@@ -3,6 +3,7 @@ package io.jenkins.plugins.remote.result.trigger.utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.type.CollectionType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import hudson.model.BuildableItem;
@@ -20,6 +21,7 @@ import javax.net.ssl.X509TrustManager;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -30,6 +32,32 @@ import java.util.stream.Collectors;
  * @author HW
  */
 public class RemoteJobResultUtils {
+
+    /**
+     * HTTP 请求超时时间
+     */
+    private static final Duration HTTP_TIMEOUT = Duration.ofSeconds(30);
+
+    /**
+     * 复用的 ObjectMapper（线程安全），关闭未知字段校验以兼容不同版本远程 API 返回
+     */
+    private static final ObjectMapper MAPPER = new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+    /**
+     * 复用的美化 JSON 输出器（线程安全）
+     */
+    private static final ObjectWriter PRETTY_WRITER = MAPPER.writerWithDefaultPrettyPrinter();
+
+    /**
+     * 复用的普通 OkHttpClient
+     */
+    private static volatile OkHttpClient sharedHttpClient;
+
+    /**
+     * 复用的信任所有证书的 OkHttpClient
+     */
+    private static volatile OkHttpClient trustAllHttpClient;
 
     /**
      * get remote job last build number
@@ -157,7 +185,7 @@ public class RemoteJobResultUtils {
                 if (!file.getParentFile().exists()) {
                     FileUtils.forceMkdirParent(file);
                 }
-                String string = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(jobResultInfos);
+                String string = PRETTY_WRITER.writeValueAsString(jobResultInfos);
                 FileUtils.writeStringToFile(file, string, StandardCharsets.UTF_8);
             }
         } catch (IOException e) {
@@ -206,7 +234,7 @@ public class RemoteJobResultUtils {
         if (!file.getParentFile().exists()) {
             FileUtils.forceMkdirParent(file);
         }
-        String string = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(jobResultInfos);
+        String string = PRETTY_WRITER.writeValueAsString(jobResultInfos);
         FileUtils.writeStringToFile(file, string, StandardCharsets.UTF_8);
     }
 
@@ -233,8 +261,59 @@ public class RemoteJobResultUtils {
         List<String> jobs = jobResultInfos.stream()
                 .map(info -> StringUtils.isNotBlank(info.getUid()) ? info.getUid() : info.getRemoteJobUrl())
                 .collect(Collectors.toUnmodifiableList());
-        envs.put("REMOTE_JOBS", new ObjectMapper().writeValueAsString(jobs));
+        envs.put("REMOTE_JOBS", MAPPER.writeValueAsString(jobs));
         return envs;
+    }
+
+    /**
+     * 获取复用的 OkHttpClient，按需懒加载。
+     * OkHttpClient 内部持有连接池与线程池，应复用而非每次请求新建，避免资源泄漏。
+     *
+     * @param trustAllCertificates 是否信任所有证书
+     * @return OkHttpClient
+     */
+    private static OkHttpClient getHttpClient(boolean trustAllCertificates) {
+        if (trustAllCertificates) {
+            OkHttpClient client = trustAllHttpClient;
+            if (client == null) {
+                synchronized (RemoteJobResultUtils.class) {
+                    client = trustAllHttpClient;
+                    if (client == null) {
+                        client = newHttpClientBuilder()
+                                .sslSocketFactory(SSLSocketManager.getSSLSocketFactory(),
+                                        (X509TrustManager) SSLSocketManager.getTrustManager()[0])
+                                .hostnameVerifier(SSLSocketManager.getHostnameVerifier())
+                                .build();
+                        trustAllHttpClient = client;
+                    }
+                }
+            }
+            return client;
+        }
+        OkHttpClient client = sharedHttpClient;
+        if (client == null) {
+            synchronized (RemoteJobResultUtils.class) {
+                client = sharedHttpClient;
+                if (client == null) {
+                    client = newHttpClientBuilder().build();
+                    sharedHttpClient = client;
+                }
+            }
+        }
+        return client;
+    }
+
+    /**
+     * 创建带超时配置的 OkHttpClient Builder
+     *
+     * @return OkHttpClient.Builder
+     */
+    private static OkHttpClient.Builder newHttpClientBuilder() {
+        return new OkHttpClient.Builder()
+                .connectTimeout(HTTP_TIMEOUT)
+                .writeTimeout(HTTP_TIMEOUT)
+                .readTimeout(HTTP_TIMEOUT)
+                .callTimeout(HTTP_TIMEOUT);
     }
 
     /**
@@ -247,9 +326,6 @@ public class RemoteJobResultUtils {
      */
     private static String requestRemoteApi(Item job, RemoteJobInfo jobInfo, String apiUrl)
             throws IOException, UnSuccessfulRequestStatusException {
-        // OkHttp Client
-        OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
-
         RemoteJenkinsServer remoteServer = RemoteJenkinsServerUtils
                 .getRemoteJenkinsServer(jobInfo.getRemoteServer());
 
@@ -258,14 +334,8 @@ public class RemoteJobResultUtils {
             return null;
         }
 
-        // trustAllCertificates
-        if (remoteServer.isTrustAllCertificates()) {
-            clientBuilder
-                    .sslSocketFactory(SSLSocketManager.getSSLSocketFactory(),
-                            (X509TrustManager) SSLSocketManager.getTrustManager()[0])
-                    .hostnameVerifier(SSLSocketManager.getHostnameVerifier());
-        }
-        OkHttpClient okHttpClient = clientBuilder.build();
+        // 复用 OkHttpClient（按是否信任所有证书区分），避免每次请求新建造成资源泄漏
+        OkHttpClient okHttpClient = getHttpClient(remoteServer.isTrustAllCertificates());
 
         // OkHttp Request
         Request.Builder requestBuilder = new Request.Builder();
@@ -304,10 +374,8 @@ public class RemoteJobResultUtils {
         String body = requestRemoteApi(job, jobInfo, apiUrl);
         if (body != null) {
             // json
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
             //noinspection unchecked
-            return SourceMap.of(mapper.readValue(body, Map.class));
+            return SourceMap.of(MAPPER.readValue(body, Map.class));
         }
         return null;
     }
@@ -336,10 +404,8 @@ public class RemoteJobResultUtils {
     public static List<JobResultInfo> getSavedJobInfos(Item job) throws IOException {
         File file = getRemoteResultConfigFile(job);
         if (file.exists()) {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
             CollectionType collectionType = TypeFactory.defaultInstance().constructCollectionType(List.class, JobResultInfo.class);
-            return mapper.readValue(file, collectionType);
+            return MAPPER.readValue(file, collectionType);
         }
         return new ArrayList<>();
     }
@@ -409,14 +475,13 @@ public class RemoteJobResultUtils {
             // result json
             Map<String, Object> resultJson = jobResultInfo.getRemoteResult();
             if (resultJson != null) {
-                ObjectMapper mapper = new ObjectMapper();
                 SourceMap map = SourceMap.of(resultJson);
                 for (String key : resultJson.keySet()) {
                     Object object = map.getSource().get(key);
                     if (object instanceof String) {
                         envs.put(prefix + "RESULT_" + key, map.stringValue(key));
                     } else if (object instanceof Collection<?> || object instanceof Map<?, ?>) {
-                        envs.put(prefix + "RESULT_" + key, mapper.writeValueAsString(object));
+                        envs.put(prefix + "RESULT_" + key, MAPPER.writeValueAsString(object));
                     } else {
                         envs.put(prefix + "RESULT_" + key, object.toString());
                     }
