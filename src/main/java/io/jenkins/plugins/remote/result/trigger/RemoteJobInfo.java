@@ -212,7 +212,7 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
          */
         @POST
         @Restricted(NoExternalUse.class)
-        public ListBoxModel doFillRemoteServerItems(@QueryParameter String remoteJenkinsServer) {
+        public ListBoxModel doFillRemoteServerItems(@QueryParameter String remoteServer) {
             ListBoxModel model = new ListBoxModel();
 
             model.add("");
@@ -221,7 +221,7 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
             for (RemoteJenkinsServer server : servers) {
                 String key = StringUtils.isNotEmpty(server.getDisplayName()) ? server.getDisplayName() : server.getUrl();
                 if (server.getId() != null && key != null) {
-                    if (Jenkins.get().hasPermission(Jenkins.READ) || StringUtils.equals(server.getId(), remoteJenkinsServer)) {
+                    if (Jenkins.get().hasPermission(Jenkins.READ) || StringUtils.equals(server.getId(), remoteServer)) {
                         model.add(key, server.getId());
                     }
                 }
