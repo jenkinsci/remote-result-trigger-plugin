@@ -263,15 +263,17 @@ public class RemoteBuildResultTrigger extends AbstractTrigger implements Seriali
         source.remove("artifacts");
         source.remove("_class");
         // 清理actions
-        List<Map> actions = result.listValue("actions", Map.class);
         SourceMap resultJson = null;
-        for (Map action : actions) {
-            SourceMap sourceMap = SourceMap.of(action);
-            if (RemoteResultAction.class.getName().equals(sourceMap.stringValue("_class"))) {
-                Map resultJsonMap = sourceMap.sourceMap("result").getSource();
-                resultJsonMap.remove("_class");
-                resultJson = SourceMap.of(resultJsonMap);
-                break;
+        List<Map> actions = result.listValue("actions", Map.class);
+        if (actions != null) {
+            for (Map action : actions) {
+                SourceMap sourceMap = SourceMap.of(action);
+                if (RemoteResultAction.class.getName().equals(sourceMap.stringValue("_class"))) {
+                    Map resultJsonMap = sourceMap.sourceMap("result").getSource();
+                    resultJsonMap.remove("_class");
+                    resultJson = SourceMap.of(resultJsonMap);
+                    break;
+                }
             }
         }
         source.remove("actions");
