@@ -14,7 +14,7 @@
 
     <f:entry title="Trigger With Build Result" field="triggerResults">
         <j:forEach var="item" items="${descriptor.getBuildResults()}">
-            <f:checkbox title="${item}" checked="${instance.isTriggerResultChecked(item)}"/>&amp;nbsp;&amp;nbsp;
+            <f:checkbox title="${item}" checked="${instance != null ? instance.isTriggerResultChecked(item) : item == 'SUCCESS'}"/>&amp;nbsp;&amp;nbsp;
         </j:forEach>
     </f:entry>
 
