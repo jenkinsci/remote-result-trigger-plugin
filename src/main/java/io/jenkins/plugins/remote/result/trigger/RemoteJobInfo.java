@@ -49,7 +49,7 @@ public class RemoteJobInfo implements Describable<RemoteJobInfo>, Serializable {
     @Getter
     private String uid;
     @Getter
-    private List<String> triggerResults = new ArrayList<>();
+    private List<String> triggerResults = new ArrayList<>(List.of(ALL_BUILD_RESULT[0]));
     @Getter
     private List<ResultCheck> resultChecks = new ArrayList<>();
 
